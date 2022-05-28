@@ -114,6 +114,10 @@ public class Model extends Observable {
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
 
+
+
+
+
         checkGameOver();
         if (changed) {
             setChanged();
@@ -138,6 +142,15 @@ public class Model extends Observable {
      * */
     public static boolean emptySpaceExists(Board b) {
         // TODO: Fill in this function.
+        int bSize = b.size();
+        for(int i = 0; i < bSize; i += 1) {
+            for (int j = 0; j < bSize; j += 1) {
+                Tile bTile = b.tile(i, j);
+                if (bTile == null) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
@@ -148,6 +161,15 @@ public class Model extends Observable {
      */
     public static boolean maxTileExists(Board b) {
         // TODO: Fill in this function.
+        int bSize = b.size();
+        for(int i = 0; i < bSize; i += 1) {
+            for (int j = 0; j < bSize; j += 1) {
+                Tile bTile = b.tile(i, j);
+                if (bTile != null && bTile.value() == MAX_PIECE) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
@@ -159,6 +181,32 @@ public class Model extends Observable {
      */
     public static boolean atLeastOneMoveExists(Board b) {
         // TODO: Fill in this function.
+        if (Model.emptySpaceExists(b)) {
+            return true;
+        }
+
+        int bSize = b.size();
+        // compare in each row if there are two adjacent tiles with same value
+        for(int j = 0; j < bSize; j += 1) {
+            for (int i = 1; i < bSize; i += 1) {
+                Tile bTile = b.tile(i, j);
+                Tile preTile = b.tile(i - 1, j);
+                if (bTile.value() == preTile.value()) {
+                    return true;
+                }
+            }
+        }
+
+        // compare in each column if there are two adjacent tiles with same value
+        for(int i = 0; i < bSize; i += 1) {
+            for (int j = 1; j < bSize; j += 1) {
+                Tile bTile = b.tile(i, j);
+                Tile preTile = b.tile(i, j - 1);
+                if (bTile.value() == preTile.value()) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 

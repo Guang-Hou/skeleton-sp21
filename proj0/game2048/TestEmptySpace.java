@@ -1,7 +1,6 @@
 package game2048;
 
 import org.junit.Test;
-
 import static org.junit.Assert.*;
 
 /** Tests the emptySpaceExists() static method of Model.
