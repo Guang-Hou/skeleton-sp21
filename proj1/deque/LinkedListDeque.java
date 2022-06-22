@@ -122,7 +122,6 @@ public class LinkedListDeque<T> implements Deque<T> {
         return getRecursiveHelper(cur.next, index - 1);
     }
 
-
     private class LinkedListDequeIterator implements Iterator<T> {
 
         Node p = sentinel.next;
@@ -141,7 +140,6 @@ public class LinkedListDeque<T> implements Deque<T> {
 
     }
 
-    @Override
     public Iterator<T> iterator() {
         return new LinkedListDequeIterator();
     }
