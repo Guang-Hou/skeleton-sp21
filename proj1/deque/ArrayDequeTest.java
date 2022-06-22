@@ -60,6 +60,26 @@ public class ArrayDequeTest {
     }
 
     @Test
+    /** Fill up, empty and fill up again. */
+    public void fillEmptyFillTest() {
+
+        ArrayDeque<Integer> lld1 = new ArrayDeque<Integer>();
+
+        lld1.addFirst(10);
+        lld1.addLast(20);
+        lld1.removeFirst();
+        lld1.removeLast();
+        // should be empty
+        assertTrue("lld1 should be empty after removal", lld1.isEmpty());
+
+        lld1.addFirst(10);
+        lld1.addLast(20);
+
+        assertEquals("lld1 should contain 2 item", 2, lld1.size());
+
+    }
+
+    @Test
     /* Tests removing from an empty deque */
     public void removeEmptyTest() {
 
@@ -105,7 +125,7 @@ public class ArrayDequeTest {
     /* check if null is return when removing from an empty ArrayDeque. */
     public void emptyNullReturnTest() {
 
-        System.out.println("Make sure to uncomment the lines below (and delete this print statement).");
+        //System.out.println("Make sure to uncomment the lines below (and delete this print statement).");
 
         ArrayDeque<Integer> lld1 = new ArrayDeque<Integer>();
 

@@ -7,26 +7,29 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
     int nextFirst;
     int nextLast;
     private T[] items;
+    private static final int MINIMUM_SIZE = 8;
 
     public ArrayDeque() {
         size = 0;
         nextFirst = 4;
         nextLast = 5;
-        items = (T[]) new Object[8];
+        items = (T[]) new Object[MINIMUM_SIZE];
     }
 
     private void resize() {
-        T[] newItems = (T[]) new Object[size * 2];
-        int newFirst = size / 2;
-        if (nextLast > nextFirst) {
-            System.arraycopy(items, nextFirst + 1, newItems, newFirst, size);
-        } else {
-            System.arraycopy(items, nextFirst + 1, newItems, newFirst, items.length - nextFirst - 1);
-            System.arraycopy(items, 0, newItems, newFirst + items.length - 1 - nextFirst, nextLast);
+        if (items.length > MINIMUM_SIZE) {
+            T[] newItems = (T[]) new Object[size * 2];
+            int newFirst = size / 2;
+            if (nextLast > nextFirst) {
+                System.arraycopy(items, nextFirst + 1, newItems, newFirst, size);
+            } else {
+                System.arraycopy(items, nextFirst + 1, newItems, newFirst, items.length - nextFirst - 1);
+                System.arraycopy(items, 0, newItems, newFirst + items.length - 1 - nextFirst, nextLast);
+            }
+            nextFirst = newFirst - 1;
+            nextLast = nextFirst + size + 1;
+            items = newItems;
         }
-        nextFirst = newFirst - 1;
-        nextLast = nextFirst + size + 1;
-        items = newItems;
     }
 
 
