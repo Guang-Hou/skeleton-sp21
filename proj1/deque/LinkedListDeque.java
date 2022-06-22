@@ -2,7 +2,7 @@ package deque;
 
 import java.util.Iterator;
 
-public class LinkedListDeque<T> implements Deque<T>{
+public class LinkedListDeque<T> implements Deque<T> {
 
     private final Node sentinel;
     private int size;
@@ -12,8 +12,10 @@ public class LinkedListDeque<T> implements Deque<T>{
         Node prev;
         Node next;
 
-        public Node() {  }
-        public Node(T item) {
+        Node() {
+        }
+
+        Node(T item) {
             this.item = item;
         }
     }
@@ -98,6 +100,29 @@ public class LinkedListDeque<T> implements Deque<T>{
         }
     }
 
+    public T getRecursive(int index) {
+        if (index < size) {
+            return getRecursiveHelper(sentinel, index + 1);
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * return the index-item after node cur
+     *
+     * @param cur
+     * @param index
+     * @return
+     */
+    public T getRecursiveHelper(Node cur, int index) {
+        if (index == 0) {
+            return cur.item;
+        }
+        return getRecursiveHelper(cur.next, index - 1);
+    }
+
+
     private class LinkedListDequeIterator implements Iterator<T> {
 
         Node p = sentinel.next;
@@ -113,6 +138,7 @@ public class LinkedListDeque<T> implements Deque<T>{
             p = p.next;
             return item;
         }
+
     }
 
     @Override
@@ -122,7 +148,7 @@ public class LinkedListDeque<T> implements Deque<T>{
 
     @Override
     public boolean equals(Object o) {
-        if ( o == null || o.getClass() != this.getClass()) {
+        if (o == null || o.getClass() != this.getClass()) {
             return false;
         } else if (o == this) {
             return true;
@@ -135,5 +161,10 @@ public class LinkedListDeque<T> implements Deque<T>{
             }
         }
         return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return this.toString().hashCode();
     }
 }

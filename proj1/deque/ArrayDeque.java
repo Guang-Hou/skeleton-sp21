@@ -4,8 +4,8 @@ import java.util.Iterator;
 
 public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
     private int size;
-    int nextFirst;
-    int nextLast;
+    private int nextFirst;
+    private int nextLast;
     private T[] items;
     private static final int MINIMUM_SIZE = 8;
 
@@ -23,8 +23,10 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
             if (nextLast > nextFirst) {
                 System.arraycopy(items, nextFirst + 1, newItems, newFirst, size);
             } else {
-                System.arraycopy(items, nextFirst + 1, newItems, newFirst, items.length - nextFirst - 1);
-                System.arraycopy(items, 0, newItems, newFirst + items.length - 1 - nextFirst, nextLast);
+                System.arraycopy(items, nextFirst + 1, newItems, newFirst,
+                        items.length - nextFirst - 1);
+                System.arraycopy(items, 0, newItems, newFirst + items.length - 1 - nextFirst,
+                        nextLast);
             }
             nextFirst = newFirst - 1;
             nextLast = nextFirst + size + 1;
@@ -107,17 +109,17 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
 
 
     private class ArrayDequeIterator implements Iterator<T> {
-        int iter_index;
+        int iterIndex;
 
         @Override
         public boolean hasNext() {
-            return iter_index < size;
+            return iterIndex < size;
         }
 
         @Override
         public T next() {
-            T item = get(iter_index);
-            iter_index += 1;
+            T item = get(iterIndex);
+            iterIndex += 1;
             return item;
         }
     }
@@ -143,4 +145,11 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
         }
         return true;
     }
+
+    @Override
+    public int hashCode() {
+        return this.toString().hashCode();
+    }
+
+
 }

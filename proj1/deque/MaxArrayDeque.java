@@ -2,7 +2,7 @@ package deque;
 
 import java.util.Comparator;
 
-public class MaxArrayDeque<T> extends ArrayDeque<T> implements Comparable<T>{
+public class MaxArrayDeque<T> extends ArrayDeque<T> {
     private Comparator<T> myComparator;
 
     public MaxArrayDeque(Comparator<T> c) {
@@ -38,9 +38,9 @@ public class MaxArrayDeque<T> extends ArrayDeque<T> implements Comparable<T>{
     }
 
 
-    @Override
-    public int compareTo(Object o) {
-        return this.size() - ((MaxArrayDeque<T>) o).size();
-    }
+//    @Override
+//    public int compareTo(Object o) {
+//        return this.size() - ((MaxArrayDeque<T>) o).size();
+//    }
 }
 
