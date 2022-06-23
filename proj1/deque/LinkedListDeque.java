@@ -2,7 +2,7 @@ package deque;
 
 import java.util.Iterator;
 
-public class LinkedListDeque<T> implements Deque<T> {
+public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
 
     private final Node sentinel;
     private int size;
@@ -161,8 +161,8 @@ public class LinkedListDeque<T> implements Deque<T> {
         return true;
     }
 
-    @Override
-    public int hashCode() {
-        return this.toString().hashCode();
-    }
+//    @Override
+//    public int hashCode() {
+//        return this.toString().hashCode();
+//    }
 }

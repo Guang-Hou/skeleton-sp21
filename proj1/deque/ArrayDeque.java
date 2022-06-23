@@ -146,10 +146,10 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
         return true;
     }
 
-    @Override
-    public int hashCode() {
-        return this.toString().hashCode();
-    }
+//    @Override
+//    public int hashCode() {
+//        return this.toString().hashCode();
+//    }
 
 
 }
