@@ -1,6 +1,7 @@
 package deque;
 
 import java.util.Iterator;
+import java.util.Objects;
 
 public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
 
@@ -115,7 +116,7 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
      * @param index
      * @return
      */
-    public T getRecursiveHelper(Node cur, int index) {
+    private T getRecursiveHelper(Node cur, int index) {
         if (index == 0) {
             return cur.item;
         }
@@ -146,7 +147,7 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
 
     @Override
     public boolean equals(Object o) {
-        if (o == null || ! (o instanceof Deque)) {
+        if (o == null || !(o instanceof Deque)) {
             return false;
         } else if (o == this) {
             return true;
@@ -156,7 +157,9 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
                 return false;
             }
             for (int i = 0; i < size(); i += 1) {
-                if (get(i) != other.get(i)) {
+                if (get(i) instanceof Object && other.get(i) instanceof Object && !Objects.deepEquals(get(i), other.get(i))) {
+                    return false;
+                } else if (get(i) != other.get(i)) {
                     return false;
                 }
             }

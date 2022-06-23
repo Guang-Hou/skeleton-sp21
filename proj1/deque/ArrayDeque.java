@@ -1,6 +1,7 @@
 package deque;
 
 import java.util.Iterator;
+import java.util.Objects;
 
 public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
     private int size;
@@ -91,7 +92,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
         } else {
             int lastIndex = (nextLast - 1 + items.length) % items.length;
             T last = items[lastIndex];
-            items[nextLast - 1] = null;
+            items[lastIndex] = null;
             nextLast -= 1;
             size -= 1;
             if (size < items.length / 4 && items.length > MINIMUM_SIZE) {
@@ -130,7 +131,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
 
     @Override
     public boolean equals(Object o) {
-        if (o == null || ! (o instanceof Deque)) {
+        if (o == null || !(o instanceof Deque)) {
             return false;
         } else if (o == this) {
             return true;
@@ -140,7 +141,9 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
                 return false;
             }
             for (int i = 0; i < size(); i += 1) {
-                if (get(i) != other.get(i)) {
+                if (get(i) instanceof Object && other.get(i) instanceof Object && !Objects.deepEquals(get(i), other.get(i))) {
+                    return false;
+                } else if (get(i) != other.get(i)) {
                     return false;
                 }
             }
