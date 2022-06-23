@@ -89,7 +89,8 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
         if (size == 0) {
             return null;
         } else {
-            T last = items[nextLast - 1];
+            int lastIndex = (nextLast - 1 + items.length) % items.length;
+            T last = items[lastIndex];
             items[nextLast - 1] = null;
             nextLast -= 1;
             size -= 1;
@@ -129,12 +130,12 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
 
     @Override
     public boolean equals(Object o) {
-        if (o == null || o.getClass() != this.getClass()) {
+        if (o == null || ! (o instanceof Deque)) {
             return false;
         } else if (o == this) {
             return true;
         } else {
-            ArrayDeque<T> other = (ArrayDeque<T>) o;
+            Deque<T> other = (Deque<T>) o;
             if (other.size() != this.size()) {
                 return false;
             }
