@@ -93,7 +93,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
             int lastIndex = (nextLast - 1 + items.length) % items.length;
             T last = items[lastIndex];
             items[lastIndex] = null;
-            nextLast -= 1;
+            nextLast = lastIndex;
             size -= 1;
             if (size < items.length / 4 && items.length > MINIMUM_SIZE) {
                 resize();
@@ -141,7 +141,9 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
                 return false;
             }
             for (int i = 0; i < size(); i += 1) {
-                if (get(i) instanceof Object && other.get(i) instanceof Object && !Objects.deepEquals(get(i), other.get(i))) {
+                if (get(i) instanceof Object
+                        && other.get(i) instanceof Object
+                        && !Objects.deepEquals(get(i), other.get(i))) {
                     return false;
                 } else if (get(i) != other.get(i)) {
                     return false;

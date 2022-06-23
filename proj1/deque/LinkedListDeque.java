@@ -157,9 +157,17 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
                 return false;
             }
             for (int i = 0; i < size(); i += 1) {
-                if (get(i) instanceof Object && other.get(i) instanceof Object && !Objects.deepEquals(get(i), other.get(i))) {
+                T a = get(i);
+                T b = other.get(i);
+                if (a instanceof Object
+                        && b instanceof Object
+                        && !Objects.deepEquals(a, b)) {
                     return false;
-                } else if (get(i) != other.get(i)) {
+                } else if ( a instanceof Object && !(b instanceof Object)) {
+                    return false;
+                } else if (b instanceof Object && !(a instanceof Object)) {
+                    return false;
+                } else if (a != b) {
                     return false;
                 }
             }
