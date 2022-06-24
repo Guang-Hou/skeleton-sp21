@@ -115,7 +115,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
 
     @Override
     public T get(int index) {
-        return items[convertIndex(nextFirst + 1)];
+        return items[convertIndex(nextFirst + 1 + index)];
     }
 
 
