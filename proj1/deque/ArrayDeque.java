@@ -17,19 +17,30 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
         items = (T[]) new Object[MINIMUM_SIZE];
     }
 
+    /**
+     * convert an pesudo index (which may be negative or larger than items length )
+     * to an index which will be in bound
+     * @param i
+     * @return in bound index
+     */
+    private int convertIndex(int i) {
+        return (i + items.length) % items.length;
+    }
+
     private void resize() {
-        T[] newItems = (T[]) new Object[size * 2];
+        int newSize = Math.max(size * 2, MINIMUM_SIZE);
+        T[] newItems = (T[]) new Object[newSize];
         int newFirst = size / 2;
         if (nextLast > nextFirst) {
-            System.arraycopy(items, nextFirst + 1, newItems, newFirst, size);
+            System.arraycopy(items, convertIndex(nextFirst + 1), newItems, newFirst, size);
         } else {
-            System.arraycopy(items, nextFirst + 1, newItems, newFirst,
+            System.arraycopy(items, convertIndex(nextFirst + 1), newItems, newFirst,
                     items.length - nextFirst - 1);
             System.arraycopy(items, 0, newItems, newFirst + items.length - 1 - nextFirst,
                     nextLast);
         }
-        nextFirst = newFirst - 1;
-        nextLast = nextFirst + size + 1;
+        nextFirst = (newFirst - 1 + newItems.length) % newItems.length;
+        nextLast = (nextFirst + size + 1) % newItems.length;
         items = newItems;
     }
 
@@ -38,7 +49,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
     public void addFirst(T item) {
         items[nextFirst] = item;
         size += 1;
-        nextFirst = (items.length + nextFirst - 1) % items.length;
+        nextFirst = convertIndex(nextFirst - 1);
         if (nextFirst == nextLast) {
             resize();
         }
@@ -48,7 +59,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
     public void addLast(T item) {
         items[nextLast] = item;
         size += 1;
-        nextLast = (items.length + nextLast + 1) % items.length;
+        nextLast = convertIndex(nextLast + 1);
         if (nextLast == nextFirst) {
             resize();
         }
@@ -63,7 +74,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
     @Override
     public void printDeque() {
         for (int i = 0; i < size; i += 1) {
-            System.out.print(items[(nextFirst + 1 + i) % items.length] + " ");
+            System.out.print(items[convertIndex(nextFirst + 1 + i)] + " ");
         }
         System.out.println();
     }
@@ -73,7 +84,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
         if (size == 0) {
             return null;
         } else {
-            int firstIndex = (nextFirst + 1) % items.length;
+            int firstIndex = convertIndex(nextFirst + 1);
             T first = items[firstIndex];
             items[firstIndex] = null;
             nextFirst = firstIndex;
@@ -90,7 +101,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
         if (size == 0) {
             return null;
         } else {
-            int lastIndex = (nextLast - 1 + items.length) % items.length;
+            int lastIndex = convertIndex(nextLast - 1);
             T last = items[lastIndex];
             items[lastIndex] = null;
             nextLast = lastIndex;
@@ -104,7 +115,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
 
     @Override
     public T get(int index) {
-        return items[(nextFirst + 1 + index) % items.length];
+        return items[convertIndex(nextFirst + 1)];
     }
 
 
@@ -141,11 +152,17 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
                 return false;
             }
             for (int i = 0; i < size(); i += 1) {
-                if (get(i) instanceof Object
-                        && other.get(i) instanceof Object
-                        && !Objects.deepEquals(get(i), other.get(i))) {
+                T a = get(i);
+                T b = other.get(i);
+                if (a instanceof Object
+                        && b instanceof Object
+                        && !Objects.deepEquals(a, b)) {
                     return false;
-                } else if (get(i) != other.get(i)) {
+                } else if (a instanceof Object && !(b instanceof Object)) {
+                    return false;
+                } else if (b instanceof Object && !(a instanceof Object)) {
+                    return false;
+                } else if (a != b) {
                     return false;
                 }
             }
