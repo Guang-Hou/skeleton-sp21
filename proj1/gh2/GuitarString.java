@@ -24,7 +24,6 @@ public class GuitarString {
         }
     }
 
-
     /* Pluck the guitar string by replacing the buffer with white noise. */
     public void pluck() {
         for (int i = 0; i < buffer.size(); i += 1) {
