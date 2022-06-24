@@ -21,7 +21,7 @@ public class TestArrayDequeEC {
                 student.addLast(randVal);
                 String message = "addLast(" + randVal + ")\n";
                 System.out.print(message);
-                assertEquals(message, solution.getLast(), student.get(student.size() - 1));
+                assertEquals(message, solution.removeLast(), student.removeLast());
             } else if (operationNumber == 1) {
                 // addFirst
                 int randVal = StdRandom.uniform(0, 100);
