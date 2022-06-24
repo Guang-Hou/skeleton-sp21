@@ -129,7 +129,7 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
 
         @Override
         public boolean hasNext() {
-            return !(p.next == sentinel);
+            return !(p == sentinel);
         }
 
         @Override

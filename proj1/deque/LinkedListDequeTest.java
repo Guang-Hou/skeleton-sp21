@@ -143,4 +143,17 @@ public class LinkedListDequeTest {
         }
 
     }
+
+    @Test
+    public void iteratorTest() {
+        LinkedListDeque<Integer> LLDDeque = new LinkedListDeque<>();
+        for (int i = 0; i < 10; i++) {
+            LLDDeque.addLast(i);
+        }
+
+        for (int item : LLDDeque) {
+            System.out.println(item);;
+        }
+    }
+
 }
