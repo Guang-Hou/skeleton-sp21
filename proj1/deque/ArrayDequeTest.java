@@ -170,4 +170,15 @@ public class ArrayDequeTest {
         }
     }
 
+    @Test
+    public void deepEquals() {
+        ArrayDeque<int[]> d1 = new ArrayDeque<>();
+        ArrayDeque<int[]> d2 = new ArrayDeque<>();
+        int[] int1 = new int[] {1, 2, 3};
+        int[] int2 = new int[] {1, 2, 3};
+        d1.addLast(int1);
+        d2.addLast(int2);
+        assertEquals(true, d1.equals(d2));
+    }
+
 }

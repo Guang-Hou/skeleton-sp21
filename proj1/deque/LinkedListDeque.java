@@ -167,16 +167,14 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
                     return false;
                 } else if (b instanceof Object && !(a instanceof Object)) {
                     return false;
-                } else if (a != b) {
-                    return false;
+                } else if (!(b instanceof Object) && !(a instanceof Object)) {
+                    if (a != b) {
+                        return false;
+                    }
                 }
             }
         }
         return true;
     }
 
-//    @Override
-//    public int hashCode() {
-//        return this.toString().hashCode();
-//    }
 }
