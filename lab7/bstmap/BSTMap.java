@@ -7,10 +7,10 @@ public class BSTMap<K extends Comparable, V> implements Map61B<K, V> {
     private class BSTNode {
         K key;
         V value;
-        BSTNode left;
-        BSTNode right;
+        BSTNode left, right;
 
-        public BSTNode() {}
+        public BSTNode() {
+        }
 
         public BSTNode(K k, V v) {
             key = k;
@@ -117,16 +117,19 @@ public class BSTMap<K extends Comparable, V> implements Map61B<K, V> {
     public BSTNode put(K key, V value, BSTNode n) {
         if (n == null) {
             return new BSTNode(key, value);
-        } else if (n.key.compareTo(key) == 0) {
+        }
+
+        int cmp = n.key.compareTo(key);
+
+        if (cmp == 0) {
             n.value = value;
-            return n;
-        } else if (n.key.compareTo(key) < 0) {
+        } else if (cmp < 0) {
             n.right = put(key, value, n.right);
-            return n;
         } else {
             n.left = put(key, value, n.left);
-            return n;
         }
+
+        return n;
     }
 
     @Override
@@ -208,6 +211,46 @@ public class BSTMap<K extends Comparable, V> implements Map61B<K, V> {
         size -= 1;
         return res;
     }
+
+
+    /**
+     * Delete the node of target key from tree that is closest to
+     * to the root and return the modified tree. The nodes of
+     * the original tree may be modified.
+     * https://www-inst.eecs.berkeley.edu//~cs61b/fa14/book2/data-structures.pdf
+     */
+    public BSTNode remove(BSTNode tree, K key) {
+        if (tree == null)
+            return null;
+        if (key.compareTo(tree.key) < 0)
+            tree.left = remove(tree.left, key);
+        else if (key.compareTo(tree.key) > 0)
+            tree.right = remove(tree.right, key);
+        // Otherwise, we’ve found target key node
+        else if (tree.left == null)
+            return tree.right;
+        else if (tree.right == null)
+            return tree.left;
+        else
+            tree.left = swapLargest(tree.left, tree);
+        return tree;
+    }
+
+    /** Move the key from the first node in T (in an inorder
+     * traversal) to node R (over-writing the current key of R),
+     * remove the first node of T from T, and return the resulting tree.
+     */
+    private BSTNode swapLargest(BSTNode T, BSTNode R) {
+        if (T.right == null) {
+            R.key = T.key;
+            R.value = T.value;
+            return T.left;
+        } else {
+            T.right = swapLargest(T.right, R);
+            return T;
+        }
+    }
+
 
     @Override
     public V remove(K key, V value) {
