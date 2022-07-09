@@ -1,0 +1,256 @@
+package bstmap;
+
+import java.util.*;
+
+public class BSTMap<K extends Comparable, V> implements Map61B<K, V> {
+
+    private class BSTNode {
+        K key;
+        V value;
+        BSTNode left;
+        BSTNode right;
+
+        public BSTNode() {}
+
+        public BSTNode(K k, V v) {
+            key = k;
+            value = v;
+        }
+    }
+
+    // sentinel node's right child will be the first data node
+    private BSTNode sentinel = new BSTNode();
+    int size = 0;
+
+    @Override
+    public void clear() {
+        sentinel.right = null;
+        size = 0;
+    }
+
+    @Override
+    public boolean containsKey(K key) {
+        BSTNode node = findNode(key);
+        if (node == null) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    /**
+     * Helper function to find if a node with the target key exists
+     * if exists, return the node,
+     * otherwise return null
+     *
+     * @param key
+     * @return
+     */
+    public BSTNode findNode(K key) {
+        BSTNode node = sentinel.right;
+        while (node != null) {
+            if (node.key.compareTo(key) == 0) {
+                return node;
+            } else if (node.key.compareTo(key) < 0) {
+                node = node.right;
+            } else {
+                node = node.left;
+            }
+        }
+        return null;
+    }
+
+
+    /**
+     * Find the parent node of the target node with target key
+     * if exists, return the parent node,
+     * otherwise return null
+     *
+     * @param key
+     * @return
+     */
+    public BSTNode findParent(K key) {
+        BSTNode parent = sentinel;
+        BSTNode node = sentinel.right;
+        while (node != null) {
+            if (node.key.compareTo(key) == 0) {
+                return parent;
+            } else if (node.key.compareTo(key) < 0) {
+                parent = node;
+                node = node.right;
+            } else {
+                parent = node;
+                node = node.left;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public V get(K key) {
+        BSTNode node = findNode(key);
+        if (node == null) {
+            return null;
+        } else {
+            return node.value;
+        }
+    }
+
+    @Override
+    public int size() {
+        return size;
+    }
+
+    @Override
+    public void put(K key, V value) {
+        sentinel.right = put(key, value, sentinel.right);
+        size += 1;
+    }
+
+    /**
+     * Helper function to insert key-value pair under BSTNode n
+     *
+     * @param key
+     * @param value
+     * @param n
+     */
+    public BSTNode put(K key, V value, BSTNode n) {
+        if (n == null) {
+            return new BSTNode(key, value);
+        } else if (n.key.compareTo(key) == 0) {
+            n.value = value;
+            return n;
+        } else if (n.key.compareTo(key) < 0) {
+            n.right = put(key, value, n.right);
+            return n;
+        } else {
+            n.left = put(key, value, n.left);
+            return n;
+        }
+    }
+
+    @Override
+    public Set<K> keySet() {
+        Set<K> set = new HashSet<>();
+        inOrderTraverse(set, sentinel.right);
+        return set;
+    }
+
+    // node has no left or right child
+    public void removeNodeOfNoChild(BSTNode parent, BSTNode node) {
+        if (parent.left == node) {
+            parent.left = null;
+        } else {
+            parent.right = null;
+        }
+    }
+
+    // node only has left child
+    public void removeNodeOfSingleLeftChild(BSTNode parent, BSTNode node) {
+        if (parent.left == node) {
+            parent.left = node.left;
+        } else {
+            parent.right = node.left;
+        }
+    }
+
+    // node only has right child
+    public void removeNodeOfSingleRightChild(BSTNode parent, BSTNode node) {
+        if (parent.left == node) {
+            parent.left = node.right;
+        } else {
+            parent.right = node.right;
+        }
+    }
+
+    // node has both left and right child
+    public void removeNodeOfTwoChild(BSTNode node) {
+        BSTNode iop = findInorderPredecessor(node);
+        BSTNode iopParent = findParent(iop.key);
+        node.key = iop.key;
+        node.value = iop.value;
+        // delete iop
+        if (iop.left == null) {
+            iop = null;
+        } else {
+            removeNodeOfSingleLeftChild(iopParent, iop);
+        }
+    }
+
+    // Find the in order traversal predecessor of node
+    // assume node has both left and right child nodes
+    public BSTNode findInorderPredecessor(BSTNode node) {
+        BSTNode iop = node.left;
+        while (iop.right != null) {
+            iop = iop.right;
+        }
+        return iop;
+    }
+
+    @Override
+    public V remove(K key) {
+        BSTNode parent = findParent(key);
+        if (parent == null) return null;
+
+        BSTNode node = findNode(key);
+        V res = node.value;
+
+        if (node.left == null && node.right == null) {
+            removeNodeOfNoChild(parent, node);
+        } else if (node.left != null && node.right == null) {
+            removeNodeOfSingleLeftChild(parent, node);
+        } else if (node.left == null && node.right != null) {
+            removeNodeOfSingleRightChild(parent, node);
+        } else {
+            removeNodeOfTwoChild(node);
+        }
+
+        size -= 1;
+        return res;
+    }
+
+    @Override
+    public V remove(K key, V value) {
+        BSTNode node = findNode(key);
+        if (node == null) return null;
+
+        if (node.value == value || node.value.equals(value)) {
+            return remove(key);
+        }
+
+        return null;
+    }
+
+    @Override
+    public Iterator<K> iterator() {
+        throw new UnsupportedOperationException();
+    }
+
+    public void printInOrder() {
+        List<V> data = new LinkedList<>();
+        inOrderTraverse(data, sentinel.right);
+        System.out.println(data);
+    }
+
+    // In order traversal, put the keys in a collection (can be list or set, or other collection type class)
+    public void inOrderTraverse(Collection c, BSTNode n) {
+        if (n == null) {
+            return;
+        }
+
+        inOrderTraverse(c, n.left);
+        c.add(n.key);
+        inOrderTraverse(c, n.right);
+    }
+
+    public static void main(String[] args) {
+        BSTMap<String, Integer> test = new BSTMap<>();
+        for (int i = 0; i < 10; i += 1) {
+            test.put("hi" + i, i);
+        }
+        test.printInOrder();
+        test.remove("hi4");
+        test.printInOrder();
+    }
+
+}
