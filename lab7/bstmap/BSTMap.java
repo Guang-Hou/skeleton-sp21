@@ -266,8 +266,11 @@ public class BSTMap<K extends Comparable, V> implements Map61B<K, V> {
 
     @Override
     public Iterator<K> iterator() {
-        throw new UnsupportedOperationException();
+        List<K> data = new LinkedList<>();
+        inOrderTraverse(data, sentinel.right);
+        return data.iterator();
     }
+
 
     public void printInOrder() {
         List<V> data = new LinkedList<>();
