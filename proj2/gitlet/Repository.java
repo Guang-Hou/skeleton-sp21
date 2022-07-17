@@ -25,5 +25,18 @@ public class Repository {
     /** The .gitlet directory. */
     public static final File GITLET_DIR = join(CWD, ".gitlet");
 
-    /* TODO: fill in the rest of this class. */
+    public static void setupPersistence() {
+    }
+
+   public static void checkInitialization() {
+        if (!GITLET_DIR.exists()) {
+            System.out.println("Not in an initialized Gitlet directory.");
+            System.exit(-2);
+        }
+   }
+
+
+
+
+
 }
