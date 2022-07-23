@@ -5,7 +5,7 @@ import static gitlet.Utils.*;
 /**
  * Driver class for Gitlet, a subset of the Git version-control system.
  *
- * @author TODO
+ * @author Guang Hou
  */
 public class Main {
 
@@ -14,55 +14,92 @@ public class Main {
      * <COMMAND> <OPERAND1> <OPERAND2> ...
      */
     public static void main(String[] args) {
-        // TODO: what if args is empty?
-        if (args == null) {
+        if (args.length == 0) {
             exitWithError("Please enter a command.");
         }
 
-        Repository.setupPersistence();
-
         String firstArg = args[0];
         switch (firstArg) {
-            case "init":
-                validateNumArgs("init", args, 0);
-                break;
-            case "add":
+            case "init" -> {
+                validateNumArgs("init", args, 1);
+                Repository.init();
+            }
+            case "add" -> {
                 Repository.checkInitialization();
-                validateNumArgs("add", args, 1);
-                break;
-            case "commit":
+                validateNumArgs("add", args, 2);
+                String fileName = args[1];
+                Repository.add(fileName);
+            }
+            case "commit" -> {
                 Repository.checkInitialization();
-                validateNumArgs("commit", args, 1);
-                break;
-            case "rm":
+                validateNumArgs("commit", args, 2);
+                String message = args[1];
+                Repository.makeCommit(message);
+            }
+            case "rm" -> {
                 Repository.checkInitialization();
-                validateNumArgs("rm", args, 1);
-                break;
-            case "log":
+                validateNumArgs("add", args, 2);
+                String fileName = args[1];
+                Repository.rmFile(fileName);
+            }
+            case "log" -> {
                 Repository.checkInitialization();
-                validateNumArgs("log", args, 0);
-                break;
-            case "global-log":
-
-            case "find":
-
-            case "status":
-
-            case "checkout":
-
-            case "branch":
-
-            case "rm-branch":
-
-            case "reset":
-
-
-            case "merge":
-
-
-
-            default:
-                exitWithError("No command with that name exists.");
+                validateNumArgs("log", args, 1);
+                Repository.showLocalLog();
+            }
+            case "global-log" -> {
+                Repository.checkInitialization();
+                validateNumArgs("global-log", args, 1);
+                Repository.showGlobalLog();
+            }
+            case "find" -> {
+                Repository.checkInitialization();
+                validateNumArgs("find", args, 2);
+                String message = args[1];
+                Repository.findCommitFromMessage(message);
+            }
+            case "status" -> {
+                Repository.checkInitialization();
+                validateNumArgs("status", args, 1);
+                Repository.showStatus();
+            }
+            case "checkout" -> {
+                Repository.checkInitialization();
+                if (args.length == 2) {
+                    String branchName = args[1];
+                    Repository.checkoutBranch(branchName);
+                } else if (args.length == 3) {
+                    String fileName = args[2];
+                    Repository.checkoutFile(fileName);
+                } else if (args.length == 4) {
+                    String commitID = args[1];
+                    String fileName = args[3];
+                    Repository.checkoutCommitAndFile(commitID, fileName);
+                } else {
+                    throw new RuntimeException("Incorrect operands.");
+                }
+            }
+            case "branch" -> {
+                Repository.checkInitialization();
+                validateNumArgs("branch", args, 2);
+            }
+            case "rm-branch" -> {
+                Repository.checkInitialization();
+                validateNumArgs("rm-branch", args, 2);
+            }
+            case "reset" -> {
+                Repository.checkInitialization();
+                validateNumArgs("reset", args, 1);
+            }
+            case "merge" -> {
+                Repository.checkInitialization();
+                validateNumArgs("merge", args, 2);
+            }
+            case "print" -> {
+                Repository.checkInitialization();
+                Repository.printVariables();
+            }
+            default -> exitWithError("No command with that name exists.");
         }
     }
 

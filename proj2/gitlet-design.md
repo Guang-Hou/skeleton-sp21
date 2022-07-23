@@ -3,41 +3,48 @@
 **Name**: Guang Hou
 
 ## Classes and Data Structures
-
 ### Class 1: Main
 This is the entry point to our program. 
 It takes in arguments from the command line and based on the command (the first element of the args array) 
 calls the corresponding command in Repository class which will actually execute the logic of the command. 
 It also validates the arguments based on the command to ensure that enough arguments were passed in.
-
 #### Fields
 This class has no fields and hence no associated state: it simply validates arguments and defers the execution to the Repository class.
 
 
 ### Class 2: Repository
 This class will handle all input commands by reading/writing from/to the correct files, setting up persistence, and additional error checking.
-
 #### Fields
 1. `public static final File CWD` The Current Working Directory. It provides a way to access other files after adding the relevant relative path.
 2. `public static final File GITLET_DIR` The hidden `.gitlet` directory. This is where all the persistence files will be stored.
-3. `public static final File HEAD` The `head` file object which stores the current active commit and active branch. It stores the information in strings. 
-4. `public static Commit headCommit` Static variable of the Head commit object 
+3. `public static final File COMMITS_DIR` The `commits` directory to store Commit objects.
+4. `public static final File BLOBS_DIR` The `blobs` director to store file blobs.
+5. `public static final File STAGING_DIR` The stagingArea directory.
+6. `public static File HEAD` The `head` file object which stores name of the active branch. It stores the information in strings. 
+7. `public static File BRANCHES` File storing the branches of branchName : commitID in Map<String, String>
+8. `public static File addFiles` A serialized file storing hashmap<String, String> stores fileName : hash for files staged to add
+9. `public static File rmFiles` A serialized file storing hashmap<String, String> stores fileName : hash for files staged to remove
+10. `public static HashMap<String, String> branches` Static variable for reading the file BRANCHES
+11. `public static String head` Static variable for reading the file HEAD
+12. `public static Commit headCommit` 
+13. `public static HashMap<String, String> addFilesMap`
+14. `public static HashMap<String, String> rmFilesMap`
 
 
 ### Class 3: Commit
 This class represents a `Commit` that will be stored in a file. Because each Commit will have a unique name (SHA hash code), 
 we may simply use that as the name of the file that the object is serialized to.
-
 #### Fields
 1. `public String message` The commit message.
-2. `public String timeStamp` The timeStamp.
-3. `public String parentCommitID` The previous parent commitID.
-4. `public String branch` The branch.
-5. `public Map<String, String> blobs` A hashmap storing the file names and their hash codes.
+2. `public Date timeStamp` The timestamp.
+3. `public String[] parentCommitID` The previous parent commitID in a String array.
+4. `public Map<String, String> blobs` A hashmap storing the file names and their hash codes.
 
 
 ## Algorithms
-The main logics reside in the **Repository class**. 
+
+### Repository Class
+The main logics reside in the **Repository class**.
 
 1. `public static void init()` 
    1. Used for `java gitlet.Main init` command. 
@@ -49,25 +56,24 @@ The main logics reside in the **Repository class**.
    2. Print a warning if CWD doesn't have `gitlet`system initialized.
 3. `public static void add(String file)`
    1. Used for `java gitlet.Main add [file name]` command.
-   2. Create a SHA1 hash of the file content.
+   2. Save the file temperarily in .gitlet folder and calculate the SHA1 hash of the file content.
    3. Check if this SHA1 exists in the current Commit's blobs hashmap.
-      1. if it exists, then do not stage it. Remove it from the staging area if it already there.
-      2. if it doesn't exist, add the fileName : hash the stagingArea `addFiles`. 
-      3. Serialize the file to the `blobs` folder, the file name should be its hash.
-   4. The file will no longer be staged for removal (see gitlet rm), if it was at the time of the command.
-      1. check if the file is in the StagingArea `rmFiles`, if so remove it there
+      1. if it exists, then do not stage it. Remove it from the staging area if it is already there.
+      2. if it doesn't exist, add the fileName : hash the stagingArea `addFiles`; move the file to the `blobs` folder; if this file was already in the addFiles, update the hash.
+   4. Check if the file exists in the StagingArea `rmFiles`, if so remove it there.
+   5. save the static variables to files.
 4. `public static void makeCommit(String message)`
    1. Used for `java gitlet.Main commit [message]` command.
-   2. Use the static instance variable `head`, and create a new Commit object by copying constructor.
+   2. Use the static instance variable `head`, and create a new Commit object by the copying constructor.
    3. Check if the two files in stagingArea: `addFiles` and `rmFiles`, 
       1. if empty print out message and exit.
       2. If there are files in the stagingArea. Update them in the commit.
-   4. update the commit.
-      1. update message.
-      2. For each `file:hash` in the `addFiles`, update it in the `blobs` section of the commit.
-      3. For each `file:hash` in the `rmFiles`, remove it from the `blobs` section of the commit.
+         1. update message.
+         2. For each `file:hash` in the `addFiles`, update it in the `blobs` section of the commit.
+         3. For each `file:hash` in the `rmFiles`, remove it from the `blobs` section of the commit.
+         4. Add parentCommitID.
    5. save commit to a serialized file to the commits folder.
-   6. change `head` content as the new commit hash and write it to update the file.
+   6. change `head` and active branch content as the new commit hash and write it to update the file.
 5. `public static void rmFile(String file)`
    1. Used for `java gitlet.Main rm [file name]` command
    2. check if the file name is in the `addFiles`
@@ -81,7 +87,7 @@ The main logics reside in the **Repository class**.
    4. From the parent commitID, read its contents and add them to the StringBuilder.
    5. Repeat until reaching the initial commit where the parent commitID is null.
    6. Display the whole string content.
-7. `public BST<STring> createCommitBST()`
+7. `public BST<String> createCommitBST()`
    1. Helper function to build a BST tree of all commits, ordered by the commit date.
    2. Iterate through all the commit objects under `commits` folder, add them to the BST.
 8. `public String showGlobalLog()`
@@ -128,14 +134,14 @@ The main logics reside in the **Repository class**.
 17. `public void merge(String branch)`
     1. Used for `java gitlet.Main merge [branch name]` command
     2. Create a new Commit object by copying the head from the current branch. Use it as the baseline and modify it. 
-    3. We only need to consider the given branch's impact on the current branch and on the split node.
-       1. For the common files between the given branch and the current branch, if they both modified the file from the common ancestor, we have a conflict
-          1. if they have different hash, but only one branch modified the common ancestor, we do not have a conflict
+    3. We only need to incorporate the given branch's changes of the ancestor to the current branch.
+       1. For the files that the given branch just inherits from the ancestor but did not modify. No action is needed. Since we are using the current branch as baseline.
        2. For the changes the given branch brings to the common ancestor
           1. If the given branch deletes files from the common ancestor
              1. if these files are absent in the current branch, no action is needed
-             2. if these files are present in the current branch, and if they are not modified by the current branch, then we need to delete them from the current branch. 
-                If they are modified in the current branch, we need to keep them, no action is needed.
+             2. if these files are present in the current branch, 
+                1. if they are not modified by the current branch, then we need to delete them from the current branch.
+                2. if they are modified in the current branch, we need to keep them, no action is needed.
           2. If the given branch added new files to the common ancestor.
              1. If these files are inside the current branch.
                 1. if they have same hashes, no action is needed.
@@ -147,27 +153,30 @@ The main logics reside in the **Repository class**.
                 1. If in the current branch, those files are the same as the given branch, no action is needed.
                 2. If in the current branch, those files are the same as the ancestor, we want to keep the changed version from the given branch.
                 3. If in the current branch, those files are the different from the ancestor, and different from the current branch,
-                   we have a conflict.
+                   we have a merge conflict.
+       3. For the common files between the given branch and the current branch, if they both modified the file from the common ancestor, we have a conflict
+           1. if they have different hash, but only one branch modified the common ancestor, we do not have a conflict
     4. Steps
        1. Call helper function to find the split point, the latest common ancestor.
        2. If there are actually no branches in the tree:
           1. If the split point is the same commit as the given branch, do nothing and return
           2. If the split point is the current branch, then the effect is to check out the given branch
-       3. Handle case 3.2.1: given branch deletes files
+       3. Handle case 3.2.1: the given branch deleted files
           1. find the files in the common ancestor but not in the given branch
           2. filter the files that are present in the current branch
-          3. filter the files that have the same hash as the hash in the ancestor, they should be removed (and untracked)
-       4. Handle case 3.2.2: given branch added new files
+          3. filter the files that have the same hash as the hash in the ancestor, they should be staged for removal (and untracked)
+       4. Handle case 3.2.2: the given branch added new files
           1. find the files in the given branch but not in the ancestor
-          2. filter the files that are not present in the current branch, add them
+          2. filter the files that are not present in the current branch, they should be staged for add
           3. filter the files that are present in the current branch, and if they have different hash code between given branch and current branch, call handleConflict helper function.
-       5. Handle case 3.2.3: given branch modified files from ancestor
+       5. Handle case 3.2.3: the given branch modified files from ancestor
           1. find files that are both in given branch and ancestor but they have different hash 
-          2. filter the files that are absent in the current branch, add them
+          2. filter the files that are absent in the current branch, add them (to stagingArea? or copy to CWD?)
           3. filter the files that are present in the current branch
               1. if these files in current branch have different hash in the given branch
-                 1. If in the current branch, those files are the same as the ancestor, add the given branch version to the commit.
+                 1. If in the current branch, those files are the same as the ancestor, stage them for add.
                     1. If in the current branch, those files are the different from the ancestor, and different from the current branch, call handleConflict helper function.
+       6. At the end, make a new commit
 18. `public Commit findLatestCommonAncestor(String branch1, String branch2)`
     1. Helper function for merge
     2. Find the latest common ancestor for two branches
@@ -175,15 +184,20 @@ The main logics reside in the **Repository class**.
        2. when they are equal, we found the ancestor.
 19. `public void handleConflict(String file1, String file2) `
     1. Helper function to handle merge conflicts
-20. `public Set<String> commonFiles(Commit c1, Commit c2)`
+20. `public Set<String> toSet(Commit c)` 
+    1. Helper function to put the file names in the commit to a set
+
+These functions can be replaced with the standard set operations, since we can convert the commit file list to a set.
+21. `public Set<String> commonFiles(Commit c1, Commit c2)`
     1. Helper function to find the files with the same name in c1 and c2
-20. `public Set<String> commonFiles(Set<String> s1, Commit c2)`
+22. `public Set<String> commonFiles(Set<String> s1, Commit c2)`
     1. Helper function to find the files with the same name in s1 and c2
-21. `public Set<String> differentFiles(Commit c1, Commit c2)`
+23. `public Set<String> differentFiles(Commit c1, Commit c2)`
     1. Helper function to find the files that are in c1 but not c2
-21. `public Set<String> differentFiles(Set<String> s1, Commit c2)`
+24. `public Set<String> differentFiles(Set<String> s1, Commit c2)`
     1. Helper function to find the files that are in s1 but not c2
 
+### Commit Class
 The **Commit class** handles commit related operations.
 1. `public Commit(Commit parent)` Constructor based on an existing Commit. Copy everything but add the current timestamp.
 2. `public static Commit fromFile(String name)`
@@ -191,9 +205,7 @@ The **Commit class** handles commit related operations.
 
 
 ## Persistence
-
 The directory structure looks like this:
-
 ```
 CWD                             <==== Whatever the current working directory is.
 └── .gitlet                     <==== All persistant data is stored within this directory
@@ -201,7 +213,7 @@ CWD                             <==== Whatever the current working directory is.
         ├── addFiles            <==== A serialized hashmap<String, String> stores fileName : hash for filed staged to add
         ├── rmFiles             <==== A serialized hashmap<String, String> stores fileName : hash for filed staged to remove 
     ├── branches                <==== A serialized hashmap<String, String> stores branchName : hash of the branch's latest commit                
-    ├── head                    <==== A serialized String storing the hash of the current active commit
+    ├── HEAD                    <==== A serialized String storing the name of the current branch
     └── commits                 <==== Directory for all serialized Commits objects
         ├── Commit1             <==== A single Commit instance stored to a file
         ├── Commit2
@@ -218,10 +230,10 @@ The blobs folder stores the serialized file contents.
 1. Each Blob corresponds to a version of a file.
 2. The Blob file name is the SHA hash code of the file.
 
-The commits folder stores the commit information.
-1. Each Commit object has the following instance variables:
+The commits folder stores the serialized commit objects.
+- Each Commit object has the following instance variables:
    1. message
    2. timeStamp
    3. parentCommit
    4. List of file name: blob hash code
-2. Each Commit object name is the SHA hash code of the Commit object.
+- Each Commit object name is the SHA1 hash code of the Commit object.
