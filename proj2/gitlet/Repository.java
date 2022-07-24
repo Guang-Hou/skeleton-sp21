@@ -6,8 +6,6 @@ import java.io.Serializable;
 import java.nio.file.Files;
 import java.util.*;
 
-import static java.nio.file.StandardCopyOption.*;
-
 import static gitlet.Utils.*;
 
 /**
@@ -121,6 +119,10 @@ public class Repository {
         String fileContents = readContentsAsString(f);
         String hash = sha1(fileContents);
         File fileNewName = join(DestinationFolder, hash);
+        // if the fileBlob already exists, return its hash
+        if (fileNewName.exists()) {
+            return hash;
+        }
         // copy the file to the DestinationFolder and rename to it hash
         try {
             Files.copy(f.toPath(), fileNewName.toPath());
@@ -221,7 +223,7 @@ public class Repository {
             System.exit(0);
         }
 
-        if (message == null) {
+        if (message == null || message.isEmpty()) {
             System.out.println("Please enter a commit message.");
             System.exit(0);
         }
@@ -267,9 +269,11 @@ public class Repository {
 
     public static void rmFile(String fileName) {
         readStaticVariables();
-        if (addFilesMap.containsKey(fileName)) {
+        HashMap<String, String> headCommitBlobs = headCommit.getBlobs();
+
+        if (addFilesMap != null && addFilesMap.containsKey(fileName)) {
             addFilesMap.remove(fileName);
-        } else if (headCommit.getBlobs().containsKey(fileName)) {
+        } else if (headCommitBlobs != null && headCommitBlobs.containsKey(fileName)) {
             String hash = headCommit.getBlobs().get(fileName);
             rmFilesMap.put(fileName, hash);
             File f = join(CWD, fileName);
@@ -375,18 +379,21 @@ public class Repository {
                 output.append(b + "\n");
             }
         }
+        output.append("\n");
 
         output.append("=== Staged Files ===\n");
         Set<String> allAddFiles = addFilesMap.keySet();
         for (String f : allAddFiles) {
             output.append(f + "\n");
         }
+        output.append("\n");
 
         output.append("=== Removed Files ===\n");
         Set<String> allRmFiles = rmFilesMap.keySet();
         for (String f : allRmFiles) {
             output.append(f + "\n");
         }
+        output.append("\n");
 
         System.out.println(output);
     }
