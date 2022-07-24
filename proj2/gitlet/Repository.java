@@ -1,8 +1,12 @@
 package gitlet;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.Serializable;
+import java.nio.file.Files;
 import java.util.*;
+
+import static java.nio.file.StandardCopyOption.*;
 
 import static gitlet.Utils.*;
 
@@ -113,13 +117,16 @@ public class Repository {
      * @param DestinationFolder
      * @return
      */
-    public static String saveFileToSHA1Name(File DestinationFolder, File f) {
+    public static String copyFileToSHA1Name(File DestinationFolder, File f) {
         String fileContents = readContentsAsString(f);
         String hash = sha1(fileContents);
         File fileNewName = join(DestinationFolder, hash);
-        // rename the file to its hash if the DestinationFolder is the same as f's original folder
-        // copy the file if the DestinationFolder is different from original folder
-        f.renameTo(fileNewName);
+        // copy the file to the DestinationFolder and rename to it hash
+        try {
+            Files.copy(f.toPath(), fileNewName.toPath());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         return hash;
     }
 
@@ -166,26 +173,33 @@ public class Repository {
             System.exit(0);
         }
 
-        String hash = saveFileToSHA1Name(GITLET_DIR, f);
-        File fileBlob = join(GITLET_DIR, hash);
+        // this will not copy the file if the fileBlob with the same hash already exits
+        String hash = copyFileToSHA1Name(BLOBS_DIR, f);
 
         readStaticVariables();
         Map<String, String> headCommitBlobs = headCommit.getBlobs();
 
         /* Update addFilesMap */
-        // case 1: If the headCommit blobs is null or the blobs doesn't have this file hash, add this file and move the file to blobs folder
-        // case 2: If headCommit blobs have this fileName:hash. Then no need to add. If this entry is in addFilesMap, remove it.
+        // case 1: If the headCommit blobs is null or the blobs doesn't have this file hash, add this fileName:hash entry
+        // case 2: If headCommit blobs (fileName:hash) have this hash. Then no need to add this fileBlob.
+        //         If the fileName doesn't exist in the headCommit fileBlobs, then put the newFileName:hash to teh addFilesMap.
+        //         If the fileName exists in the headCommit fileBlobs:
+        //             If fileName and hash both match, and it exists is in addFilesMap, remove it.
+        //             else we need to update the hash
         if (headCommitBlobs == null || !headCommitBlobs.containsValue(hash)) {
-            // If the hash already exist, this will update its content
             addFilesMap.put(fileName, hash);
-            // Rename and copy the file blob to the blobs folder
-            if (fileBlob.renameTo(join(BLOBS_DIR, hash))) {
-                fileBlob.delete();
-            }
         } else {
-            if (headCommitBlobs.get(fileName).equals(hash)) {
-                if (addFilesMap.containsKey(fileName)) {
-                    addFilesMap.remove(fileName);
+            // The fileBlob doesn't have this fileName
+            if (!headCommitBlobs.containsKey(fileName)) {
+                addFilesMap.put(fileName, hash);
+            } else {
+                // if the fileName:hash exists, no need to add. If it is in the addFilesmap, remove it
+                if (headCommitBlobs.get(fileName).equals(hash)) {
+                    if (addFilesMap.containsKey(fileName)) {
+                        addFilesMap.remove(fileName);
+                    }
+                } else { // hash doesn't match, we need to update
+                    addFilesMap.put(fileName, hash);
                 }
             }
         }
