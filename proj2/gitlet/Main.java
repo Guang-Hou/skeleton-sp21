@@ -1,17 +1,13 @@
 package gitlet;
 
-import static gitlet.Utils.*;
-
 /**
  * Driver class for Gitlet, a subset of the Git version-control system.
- *
  * @author Guang Hou
  */
 public class Main {
 
     /**
-     * Usage: java gitlet.Main ARGS, where ARGS contains
-     * <COMMAND> <OPERAND1> <OPERAND2> ...
+     * Usage: java gitlet.Main ARGS, where ARGS contains the input command
      */
     public static void main(String[] args) {
         if (args.length == 0) {
@@ -21,46 +17,46 @@ public class Main {
         String firstArg = args[0];
         switch (firstArg) {
             case "init" -> {
-                validateNumArgs("init", args, 1);
+                validateNumArgs(args, 1);
                 Repository.init();
             }
             case "add" -> {
                 Repository.checkInitialization();
-                validateNumArgs("add", args, 2);
+                validateNumArgs(args, 2);
                 String fileName = args[1];
                 Repository.add(fileName);
             }
             case "commit" -> {
                 Repository.checkInitialization();
-                validateNumArgs("commit", args, 2);
+                validateNumArgs(args, 2);
                 String message = args[1];
                 Repository.makeCommit(message);
             }
             case "rm" -> {
                 Repository.checkInitialization();
-                validateNumArgs("add", args, 2);
+                validateNumArgs(args, 2);
                 String fileName = args[1];
                 Repository.rmFile(fileName);
             }
             case "log" -> {
                 Repository.checkInitialization();
-                validateNumArgs("log", args, 1);
+                validateNumArgs(args, 1);
                 Repository.showLocalLog();
             }
             case "global-log" -> {
                 Repository.checkInitialization();
-                validateNumArgs("global-log", args, 1);
+                validateNumArgs(args, 1);
                 Repository.showGlobalLog();
             }
             case "find" -> {
                 Repository.checkInitialization();
-                validateNumArgs("find", args, 2);
+                validateNumArgs(args, 2);
                 String message = args[1];
                 Repository.findCommitFromMessage(message);
             }
             case "status" -> {
                 Repository.checkInitialization();
-                validateNumArgs("status", args, 1);
+                validateNumArgs(args, 1);
                 Repository.showStatus();
             }
             case "checkout" -> {
@@ -81,19 +77,27 @@ public class Main {
             }
             case "branch" -> {
                 Repository.checkInitialization();
-                validateNumArgs("branch", args, 2);
+                validateNumArgs(args, 2);
+                String branchName = args[1];
+                Repository.createBranch(branchName);
             }
             case "rm-branch" -> {
                 Repository.checkInitialization();
-                validateNumArgs("rm-branch", args, 2);
+                validateNumArgs(args, 2);
+                String branchName = args[1];
+                Repository.rmBranch(branchName);
             }
             case "reset" -> {
                 Repository.checkInitialization();
-                validateNumArgs("reset", args, 1);
+                validateNumArgs(args, 2);
+                String commitID = args[1];
+                Repository.resetCommit(commitID);
             }
             case "merge" -> {
                 Repository.checkInitialization();
-                validateNumArgs("merge", args, 2);
+                validateNumArgs( args, 2);
+                String branchName = args[1];
+                Repository.merge(branchName);
             }
             case "print" -> {
                 Repository.checkInitialization();
@@ -104,7 +108,7 @@ public class Main {
     }
 
 
-    public static void validateNumArgs(String cmd, String[] args, int n) {
+    public static void validateNumArgs(String[] args, int n) {
         if (args.length != n) {
             throw new RuntimeException("Incorrect operands.");
         }

@@ -1,6 +1,5 @@
 package gitlet;
 
-import java.io.File;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -8,33 +7,25 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import static gitlet.Utils.*;
-
 /**
- * Represents a gitlet commit object.
  * This class provides the way to represent Commit information.
- * It doesn't handle Commit instance file manipulation directly.
  *
  * @author Guang Hou
  */
 public class Commit implements Serializable, Comparable<Commit> {
-    /**
-     * The current working directory.
-     */
-    public static final File CWD = new File(System.getProperty("user.dir"));
-    /**
-     * The CWD/.gitlet/commits directory.
-     */
-    public static final File COMMIT_DIR = join(CWD, ".gitlet", "commits");
 
     /* The message of this Commit. */
     private String message;
+    /* The Date object representing the timestamp of a Commit. */
     private Date timestamp;
-    /* The parent commits of current commit, stored as String in an Array */
+    /* The parent commits of current commit, stored as String in an Array. */
     private ArrayList<String> parents = new ArrayList<>();
-    /* The HashMap storing all the files in the format of fileName: hash */
+    /* The HashMap storing all the files in the format of fileName: hash. */
     private HashMap<String, String> blobs = new HashMap<>();
 
+    /**
+     * The default constructor, used for the initial commit.
+     */
     public Commit() {
         message = "initial commit";
         timestamp = new Date(0);
@@ -42,6 +33,13 @@ public class Commit implements Serializable, Comparable<Commit> {
         blobs = null;
     }
 
+    /**
+     * The copy constructor which will copy most contents from parentCommit.
+     * It will set the timestamp as the time of commit.
+     *
+     * @param parentCommitID The hash id of parent Commit.
+     * @param parentCommit   The parent Commit object.
+     */
     public Commit(String parentCommitID, Commit parentCommit) {
         timestamp = new Date();
         parents.clear();
@@ -52,36 +50,20 @@ public class Commit implements Serializable, Comparable<Commit> {
         }
     }
 
-//    public Commit(String parentCommitID) {
-//        Commit parent = fromFile(parentCommitID);
-//        timestamp = new Date();
-//        parentCommits.add(parentCommitID);
-//        Map<String, String> parentBlobs = parent.getBlobs();
-//        blobs = new HashMap<String, String>(parentBlobs);
-//    }
-
     /**
-     * Read from the file in COMMITS_DIR to a Commit object
-     * The file name is commitID in String
-     */
-    public static Commit fromFile(String commitID) {
-        File f = join(COMMIT_DIR, commitID);
-        Commit c = readObject(f, Commit.class);
-        return c;
-    }
-
-    /**
-     * This is used for debugging purpose.
+     * This is just for debugging purpose.
      */
     @Override
     public String toString() {
-        return "Date - " + timestamp + "\n" +
-                "message - " + message + "\n" +
-                "parents - " + parents + "\n" +
-                "blobs - " + blobs;
+        return "Date - " + timestamp + "\n"
+                + "message - " + message + "\n"
+                + "parents - " + parents + "\n"
+                + "blobs - " + blobs;
     }
 
-    // This is used for log
+    /**
+     * This is used in other classes for printing the Commit object.
+     */
     public String toString(String id) {
         String merge = "";
 
@@ -93,57 +75,76 @@ public class Commit implements Serializable, Comparable<Commit> {
             merge += "\n";
         }
 
-        SimpleDateFormat DateFor = new SimpleDateFormat("E MMM dd HH:mm:ss yyyy Z");
-        String stringDate = DateFor.format(timestamp);
+        SimpleDateFormat dateFormat = new SimpleDateFormat("E MMM dd HH:mm:ss yyyy Z");
+        String stringDate = dateFormat.format(timestamp);
 
-        return "===" + "\n" +
-                "commit " + id + "\n" +
-                merge +
-                "Date: " + stringDate + "\n" +
-                this.message + "\n";
+        return "===" + "\n"
+                + "commit " + id + "\n"
+                + merge
+                + "Date: " + stringDate + "\n"
+                + message + "\n";
     }
 
+    /**
+     * Getter method for instance variable message.
+     *
+     * @return this.message
+     */
     public String getMessage() {
         return message;
     }
 
+    /**
+     * Setter method for instance variable message.
+     *
+     * @param message The user provided message.
+     */
     public void setMessage(String message) {
         this.message = message;
     }
 
-    public Date getTimestamp() {
-        return timestamp;
-    }
-
-    public void setTimestamp(Date timestamp) {
-        this.timestamp = timestamp;
-    }
-
+    /**
+     * Getter method for instance variable parents.
+     *
+     * @return The parents in ArrayList<parentCommitID>.
+     */
     public ArrayList<String> getParentCommits() {
         return parents;
     }
 
-    public void setParentCommits(ArrayList<String> parentCommits) {
-        this.parents = parentCommits;
-    }
-
+    /**
+     * Getter method for instance variable blobs.
+     *
+     * @return The file blobs in HashMap<fileName, fileHash>.
+     */
     public HashMap<String, String> getBlobs() {
         return blobs;
     }
 
+    /**
+     * Setter method for instance variable blobs.
+     *
+     * @param blobs HashMap<fileName, fileHash>.
+     */
     public void setBlobs(HashMap<String, String> blobs) {
         this.blobs = blobs;
     }
 
+    /**
+     * Add the parentID to its instance variable parents of ArrayList<parentID>.
+     *
+     * @param parentID The parentID.
+     */
     public void addParentID(String parentID) {
         this.parents.add(parentID);
     }
 
-    public void saveCommitFile(String commitID) {
-        File f = join(COMMIT_DIR, commitID);
-        writeContents(f, this);
-    }
-
+    /**
+     * Implementation of Comparable.
+     *
+     * @param c The other Commit object.
+     * @return Comaprion result in int.
+     */
     @Override
     public int compareTo(Commit c) {
         return this.timestamp.compareTo(c.timestamp);
