@@ -10,14 +10,16 @@ import static gitlet.Utils.*;
 
 /**
  * Represents a gitlet repository.
- * This class handles all the input command from the user by reading/writing from/to the correct files,
+ * This class handles all the input command from the user
+ * by reading/writing from/to the correct files,
  * setting up persistence, and additional error checking.
  * All the file manipulation related work is done here.
  *
  * @author Guang Hou
  */
 public class Repository {
-    /* The current working directory. It provides a way to access other files after adding the relevant relative path. */
+    /* The current working directory.
+     * It provides a way to access other files after adding the relevant relative path. */
     private static final File CWD = new File(System.getProperty("user.dir"));
     /* The hidden `.gitlet` directory. This is where all the persistence files will be stored. */
     private static final File GITLET_DIR = join(CWD, ".gitlet");
@@ -62,7 +64,8 @@ public class Repository {
      */
     public static void init() {
         if (GITLET_DIR.exists()) {
-            System.out.println("A Gitlet version-control system already exists in the current directory.");
+            System.out.println(
+                    "A Gitlet version-control system already exists in the current directory.");
             System.exit(0);
         }
         GITLET_DIR.mkdir();
@@ -81,7 +84,8 @@ public class Repository {
     }
 
     /**
-     * Check if .getlet directory is initialized. It should be called before any gitlet operations except init.
+     * Check if .getlet directory is initialized.
+     * It should be called before any gitlet operations except init.
      */
     public static void checkInitialization() {
         if (!GITLET_DIR.exists()) {
@@ -207,7 +211,8 @@ public class Repository {
         Map<String, String> headCommitBlobs = headCommit.getBlobs();
 
         // Update addFileMap
-        // case 1: If the headCommit blobs is null or the blobs doesn't have this file hash, add this fileName:hash entry to addFileMap.
+        // case 1: If the headCommit blobs is null or the blobs doesn't have this file hash,
+        // add this fileName:hash entry to addFileMap.
         if (headCommitBlobs == null || !headCommitBlobs.containsValue(hash)) {
             addFileMap.put(fileName, hash);
         }
@@ -219,7 +224,8 @@ public class Repository {
             }
             // The fileBlob already exists.
             else {
-                // If the fileName:hash exists, no need to add. If it is in the addFilesmap, remove it.
+                // If the fileName:hash exists, no need to add.
+                // If it is in the addFilesmap, remove it.
                 if (headCommitBlobs.get(fileName).equals(hash)) {
                     if (addFileMap.containsKey(fileName)) {
                         addFileMap.remove(fileName);
@@ -336,7 +342,7 @@ public class Repository {
         Commit cur = headCommit;
         String curID = headID;
         while (cur != null) {
-            s.append(cur.toString(curID)).append("\n");
+            s.append(cur.toString(curID));
             ArrayList<String> parentCommitIDs = cur.getParentCommits();
             if (parentCommitIDs == null) {
                 break;
@@ -387,6 +393,7 @@ public class Repository {
 
     /**
      * Find all commit IDs having the provided message.
+     *
      * @param message
      */
     public static void findCommitFromMessage(String message) {
@@ -395,10 +402,10 @@ public class Repository {
         for (String commitID : commitIDs) {
             Commit c = readCommitFromFile(commitID);
             if (c.getMessage().equals(message)) {
-                relatedCommits.append(commitID);
+                relatedCommits.append(commitID).append("\n");
             }
         }
-        if (relatedCommits == null) {
+        if (relatedCommits == null || relatedCommits.length() == 0) {
             System.out.println("Found no commit with that message.");
             System.exit(0);
         }
@@ -439,18 +446,19 @@ public class Repository {
         output.append("\n");
 
         // Add modified files but not staged for commit.
-        output.append("=== Modification Not Staged For Commit ===\n");
+        output.append("=== Modifications Not Staged For Commit ===\n");
         output.append("\n");
 
         // Add untracked file names.
         output.append("=== Untracked Files ===\n");
-        output.append("\n");
+        //output.append("\n");
 
         System.out.println(output);
     }
 
     /**
      * Change the file's contens according to its snapshot in the provided commitID.
+     *
      * @param commitID The specific Commit's hash id.
      * @param fileName The file name in CWD.
      */
@@ -481,7 +489,8 @@ public class Repository {
     }
 
     /**
-     * Change a file's content according to the headCommit. 
+     * Change a file's content according to the headCommit.
+     *
      * @param fileName
      */
     public static void checkoutFile(String fileName) {
@@ -491,6 +500,7 @@ public class Repository {
 
     /**
      * Change the CWD contents according to the branch's latest commit.
+     *
      * @param branchName
      */
     public static void checkoutBranch(String branchName) {
@@ -520,17 +530,23 @@ public class Repository {
     }
 
     /**
-     * Create a new branch and point it to the headCommit. 
+     * Create a new branch and point it to the headCommit.
+     *
      * @param branchName
      */
     public static void createBranch(String branchName) {
         readStaticVariables();
+        if (branchesMap.containsKey(branchName)) {
+            System.out.println("A branch with that name already exists.");
+            System.exit(0);
+        }
         branchesMap.put(branchName, headID);
         saveStaticVariableFiles();
     }
 
     /**
      * Remove the provided branch from the repository.
+     *
      * @param branchName
      */
     public static void rmBranch(String branchName) {
@@ -542,6 +558,7 @@ public class Repository {
     /**
      * Change CWD contens according to the provided commit id.
      * Update head pointer and branch pointer.
+     *
      * @param preCommitID
      */
     public static void resetCommit(String preCommitID) {
@@ -558,7 +575,8 @@ public class Repository {
     }
 
     /**
-     * Helper function to change CWD contens based on the provided commit id. 
+     * Helper function to change CWD contens based on the provided commit id.
+     *
      * @param preCommitID The target commit object hash id.
      */
     public static void resetCommitFiles(String preCommitID) {
@@ -574,7 +592,9 @@ public class Repository {
         List<String> filesInCWD = plainFilenamesIn(CWD);
         for (String file : filesInCWD) {
             if (!headCommit.getBlobs().containsKey(file)) {
-                System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
+                System.out.println(
+                        "There is an untracked file in the way;"
+                                + " delete it, or add and commit it first.");
                 System.exit(0);
             }
         }
@@ -587,16 +607,18 @@ public class Repository {
         // Copy files from the preCommit blobs to CWD
         HashMap<String, String> fileBlobs = preCommit.getBlobs();
 
-        for (Map.Entry<String, String> entry : fileBlobs.entrySet()) {
-            String fileName = entry.getKey();
-            String fileHash = entry.getValue();
-            File f = join(BLOBS_DIR, fileHash);
-            File newFile = join(CWD, fileName);
-            // copy the file to the CWD and rename to its name
-            try {
-                Files.copy(f.toPath(), newFile.toPath());
-            } catch (IOException e) {
-                e.printStackTrace();
+        if (fileBlobs != null) {
+            for (Map.Entry<String, String> entry : fileBlobs.entrySet()) {
+                String fileName = entry.getKey();
+                String fileHash = entry.getValue();
+                File f = join(BLOBS_DIR, fileHash);
+                File newFile = join(CWD, fileName);
+                // copy the file to the CWD and rename to its name
+                try {
+                    Files.copy(f.toPath(), newFile.toPath());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
