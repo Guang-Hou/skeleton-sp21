@@ -72,7 +72,7 @@ public class Main {
                     String fileName = args[3];
                     Repository.checkoutCommitAndFile(commitID, fileName);
                 } else {
-                    throw new RuntimeException("Incorrect operands.");
+                    exitWithError("Incorrect operands.");
                 }
             }
             case "branch" -> {
@@ -110,13 +110,13 @@ public class Main {
 
     public static void validateNumArgs(String[] args, int n) {
         if (args.length != n) {
-            throw new RuntimeException("Incorrect operands.");
+            exitWithError("Incorrect operands.");
         }
     }
 
     public static void exitWithError(String message) {
         if (message != null && !message.equals("")) {
-            System.out.println(message);
+            System.out.print(message);
         }
         System.exit(-1);
     }

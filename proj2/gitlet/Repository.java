@@ -215,24 +215,18 @@ public class Repository {
         // add this fileName:hash entry to addFileMap.
         if (headCommitBlobs == null || !headCommitBlobs.containsValue(hash)) {
             addFileMap.put(fileName, hash);
-        }
-        // case 2: If headCommit blobs (fileName:hash) have this hash.
-        else {
+        } else { // case 2: If headCommit blobs (fileName:hash) have this hash.
             // The existing fileBlob doesn't have this fileName
             if (!headCommitBlobs.containsKey(fileName)) {
                 addFileMap.put(fileName, hash);
-            }
-            // The fileBlob already exists.
-            else {
+            } else { // The fileBlob already exists.
                 // If the fileName:hash exists, no need to add.
                 // If it is in the addFilesmap, remove it.
                 if (headCommitBlobs.get(fileName).equals(hash)) {
                     if (addFileMap.containsKey(fileName)) {
                         addFileMap.remove(fileName);
                     }
-                }
-                // If hash doesn't match, we need to update.
-                else {
+                } else { // If hash doesn't match, we need to update.
                     addFileMap.put(fileName, hash);
                 }
             }
@@ -463,13 +457,21 @@ public class Repository {
      * @param fileName The file name in CWD.
      */
     public static void checkoutCommitAndFile(String commitID, String fileName) {
-        List<String> commitIDs = plainFilenamesIn(COMMITS_DIR);
-        if (!commitIDs.contains(commitID)) {
+        List<String> commitFileNames = plainFilenamesIn(COMMITS_DIR);
+
+        String targetCommitID = null;
+        for (String commitFileName : commitFileNames) {
+            if (commitFileName.startsWith(commitID) || commitFileName.equals(commitID)) {
+                targetCommitID = commitFileName;
+            }
+        }
+
+        if (targetCommitID == null) {
             System.out.println("No commit with that id exists.");
             System.exit(0);
         }
 
-        Commit c = readCommitFromFile(commitID);
+        Commit c = readCommitFromFile(targetCommitID);
         HashMap<String, String> fileBlobs = c.getBlobs();
         if (!fileBlobs.containsKey(fileName)) {
             System.out.println("File does not exist in that commit.");
@@ -547,10 +549,20 @@ public class Repository {
     /**
      * Remove the provided branch from the repository.
      *
-     * @param branchName
+     * @param branchName The user provided branch name.
      */
     public static void rmBranch(String branchName) {
         readStaticVariables();
+        if (branchName.equals(activeBranchName)) {
+            System.out.println("Cannot remove the current branch.");
+            System.exit(0);
+        }
+
+        if (!branchesMap.containsKey(branchName)) {
+            System.out.println("A branch with that name does not exist.");
+            System.exit(0);
+        }
+
         branchesMap.remove(branchName);
         saveStaticVariableFiles();
     }
@@ -590,8 +602,13 @@ public class Repository {
 
         // Check if there is any untracked files in CWD
         List<String> filesInCWD = plainFilenamesIn(CWD);
+        // change headCommit to activeBranchCommit?
+        HashMap<String, String> headCommitBlobs = headCommit.getBlobs();
+        HashMap<String, String> preCommitBlobs = preCommit.getBlobs();
+
         for (String file : filesInCWD) {
-            if (!headCommit.getBlobs().containsKey(file)) {
+            if ((headCommitBlobs == null || !headCommitBlobs.containsKey(file))
+                    && preCommitBlobs != null && preCommitBlobs.containsKey(file)) {
                 System.out.println(
                         "There is an untracked file in the way;"
                                 + " delete it, or add and commit it first.");
@@ -599,23 +616,16 @@ public class Repository {
             }
         }
 
-        // Deletes all files in CWD
-        for (String file : filesInCWD) {
-            restrictedDelete(join(CWD, file));
-        }
-
         // Copy files from the preCommit blobs to CWD
-        HashMap<String, String> fileBlobs = preCommit.getBlobs();
-
-        if (fileBlobs != null) {
-            for (Map.Entry<String, String> entry : fileBlobs.entrySet()) {
+        if (preCommitBlobs != null) {
+            for (Map.Entry<String, String> entry : preCommitBlobs.entrySet()) {
                 String fileName = entry.getKey();
                 String fileHash = entry.getValue();
                 File f = join(BLOBS_DIR, fileHash);
                 File newFile = join(CWD, fileName);
                 // copy the file to the CWD and rename to its name
                 try {
-                    Files.copy(f.toPath(), newFile.toPath());
+                    Files.copy(f.toPath(), newFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

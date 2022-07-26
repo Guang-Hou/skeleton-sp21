@@ -141,7 +141,7 @@ The main logics reside in the **Repository class**.
     6. Add untracked file names.
 17. `public void checkoutCommitAndFile(String commitID, String fileName)`
     1. Used for `java gitlet.Main checkout [commit id] -- [file name]` command.
-    2. Change the file's contens according to its snapshot in the provided commitID.
+    2. Change the file's contents according to its snapshot in the provided commitID.
     3. Use the commitID to read the relevant commit object.
     4. From the commit object, get the file's hash.
     5. Use the hash, get the serialized file from the blobs folder, copy it to the CWD and overwrite the file if it is already there.
