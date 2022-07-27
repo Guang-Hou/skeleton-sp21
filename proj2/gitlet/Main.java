@@ -115,9 +115,9 @@ public class Main {
     }
 
     public static void exitWithError(String message) {
-        if (message != null && !message.equals("")) {
-            System.out.print(message);
+        if (message != null && !message.isEmpty()) {
+            System.out.println(message);
         }
-        System.exit(-1);
+        System.exit(0);
     }
 }

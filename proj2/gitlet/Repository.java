@@ -316,7 +316,7 @@ public class Repository {
 
         // Update headID and branch pointer to the new commitID.
         headID = newCommitID;
-        branchesMap.put(activeBranchName, headID);
+        branchesMap.put(activeBranchName, newCommitID);
 
         // Clear stagingArea.
         addFileMap.clear();
@@ -600,19 +600,30 @@ public class Repository {
             System.exit(0);
         }
 
-        // Check if there is any untracked files in CWD
+        if (preCommitID == headID) {
+            return;
+        }
+
+
         List<String> filesInCWD = plainFilenamesIn(CWD);
         // change headCommit to activeBranchCommit?
-        HashMap<String, String> headCommitBlobs = headCommit.getBlobs();
+        HashMap<String, String> curCommitBlobs = headCommit.getBlobs();
         HashMap<String, String> preCommitBlobs = preCommit.getBlobs();
 
-        for (String file : filesInCWD) {
-            if ((headCommitBlobs == null || !headCommitBlobs.containsKey(file))
-                    && preCommitBlobs != null && preCommitBlobs.containsKey(file)) {
+        // Check if there is any untracked files in CWD
+        for (String fileName : filesInCWD) {
+            if (curCommitBlobs == null || !curCommitBlobs.containsKey(fileName)) {
                 System.out.println(
                         "There is an untracked file in the way;"
                                 + " delete it, or add and commit it first.");
                 System.exit(0);
+            }
+        }
+
+        // Delete files that are already committed in the head commit
+        for (String file : filesInCWD) {
+            if (curCommitBlobs != null && curCommitBlobs.containsKey(file)) {
+                restrictedDelete(file);
             }
         }
 
