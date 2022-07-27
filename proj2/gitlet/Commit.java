@@ -82,7 +82,7 @@ public class Commit implements Serializable, Comparable<Commit> {
                 + "commit " + id + "\n"
                 + merge
                 + "Date: " + stringDate + "\n"
-                + message + "\n\n";
+                + message + "\n";
     }
 
     /**

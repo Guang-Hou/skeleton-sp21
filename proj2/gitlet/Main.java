@@ -11,7 +11,7 @@ public class Main {
      */
     public static void main(String[] args) {
         if (args.length == 0) {
-            exitWithError("Please enter a command.");
+            System.out.println("Please enter a command.");
         }
 
         String firstArg = args[0];
@@ -72,7 +72,7 @@ public class Main {
                     String fileName = args[3];
                     Repository.checkoutCommitAndFile(commitID, fileName);
                 } else {
-                    exitWithError("Incorrect operands.");
+                    System.out.println("Incorrect operands.");
                 }
             }
             case "branch" -> {
@@ -103,14 +103,14 @@ public class Main {
                 Repository.checkInitialization();
                 Repository.printVariables();
             }
-            default -> exitWithError("No command with that name exists.");
+            default -> System.out.println("No command with that name exists.");
         }
     }
 
 
     public static void validateNumArgs(String[] args, int n) {
         if (args.length != n) {
-            exitWithError("Incorrect operands.");
+            System.out.println("Incorrect operands.");
         }
     }
 

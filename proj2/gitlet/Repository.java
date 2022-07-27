@@ -331,12 +331,12 @@ public class Repository {
      */
     public static void showLocalLog() {
         readStaticVariables();
-        StringBuilder s = new StringBuilder();
+        StringJoiner log = new StringJoiner("\n");
 
         Commit cur = headCommit;
         String curID = headID;
         while (cur != null) {
-            s.append(cur.toString(curID));
+            log.add(cur.toString(curID));
             ArrayList<String> parentCommitIDs = cur.getParentCommits();
             if (parentCommitIDs == null) {
                 break;
@@ -347,18 +347,18 @@ public class Repository {
         }
 
         saveStaticVariableFiles();
-        System.out.println(s);
+        System.out.println(log);
     }
 
     /**
      * Show all commits in no particular order.
      */
     public static void showGlobalLog() {
-        StringBuilder log = new StringBuilder();
+        StringJoiner log = new StringJoiner("\n");
         List<String> commitIDs = plainFilenamesIn(COMMITS_DIR);
         for (String commitID : commitIDs) {
             Commit c = readCommitFromFile(commitID);
-            log.append(c.toString(commitID));
+            log.add(c.toString(commitID));
         }
         System.out.println(log);
     }
@@ -522,9 +522,10 @@ public class Repository {
         String branchHeadID = branchesMap.get(branchName);
         resetCommitFiles(branchHeadID);
 
-        // Update activeBranch
+        // Update activeBranch, head and branch pointer
         headID = branchHeadID;
         activeBranchName = branchName;
+        branchesMap.put(branchName, branchHeadID);
         addFileMap.clear();
         rmFileMap.clear();
 
