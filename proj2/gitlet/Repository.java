@@ -612,8 +612,10 @@ public class Repository {
         HashMap<String, String> preCommitBlobs = preCommit.getBlobs();
 
         // Check if there is any untracked files in CWD
+        // Untracked file means not in addFileMap and not in commitBlobs
         for (String fileName : filesInCWD) {
-            if (curCommitBlobs == null || !curCommitBlobs.containsKey(fileName)) {
+            if ((curCommitBlobs == null || !curCommitBlobs.containsKey(fileName))
+                    && (!addFileMap.containsKey(fileName))) {
                 System.out.println(
                         "There is an untracked file in the way;"
                                 + " delete it, or add and commit it first.");
