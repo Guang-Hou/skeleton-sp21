@@ -277,7 +277,7 @@ public class Repository {
      * Create a Commit object with the provided message.
      * Save the Commit object to commits folder.
      *
-     * @param message The user input message for this commit.
+     * @param message            The user input message for this commit.
      * @param additionalParentID The additional parent ID beside the active branch head.
      *                           This is used in merging.
      * @return
@@ -640,8 +640,8 @@ public class Repository {
         }
 
         // Delete files that are already committed in the head commit
-        for (String fileName : filesInCWD) {
-            if (curCommitBlobs != null && curCommitBlobs.containsKey(fileName)) {
+        if (curCommitBlobs != null) {
+            for (String fileName : curCommitBlobs.keySet()) {
                 restrictedDelete(fileName);
             }
         }
