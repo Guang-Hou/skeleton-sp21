@@ -272,7 +272,17 @@ public class Repository {
      *
      * @param message The user input message for this commit.
      */
-    public static String makeCommit(String message) {
+
+    /**
+     * Create a Commit object with the provided message.
+     * Save the Commit object to commits folder.
+     *
+     * @param message The user input message for this commit.
+     * @param additionalParentID The additional parent ID beside the active branch head.
+     *                           This is used in merging.
+     * @return
+     */
+    public static String makeCommit(String message, String additionalParentID) {
         readStaticVariables();
         Commit newCommit = new Commit(headID, headCommit);
 
@@ -284,6 +294,11 @@ public class Repository {
         if (message == null || message.isEmpty()) {
             System.out.println("Please enter a commit message.");
             System.exit(0);
+        }
+
+        // Add additional parentID.
+        if (additionalParentID != null && additionalParentID.length() > 0) {
+            newCommit.addParentID(additionalParentID);
         }
 
         // Update message in the Commit object.
@@ -678,18 +693,11 @@ public class Repository {
         // If the givenBranch modifies files from ancestor.
         givenBranchModifiesFiles(ancestorID, givenBranchID, activeBranchID);
 
-        // Update parent commit id
+        // Make the merge Commit
         String message = "Merged " + givenBranchName + " into " + activeBranchName + ".";
-        String tempCommitID = makeCommit(message);
-        Commit newCommit = readCommitFromFile(tempCommitID);
+        String newCommitID = makeCommit(message, givenBranchID);
 
-        newCommit.addParentID(givenBranchID);
-        String newCommitID = saveCommitToSHA1Name(COMMITS_DIR, newCommit);
-
-        // Delete temp commit file
-        restrictedDelete(join(COMMITS_DIR, tempCommitID));
-
-        // update head and branch pointers?
+        // update head and branch pointers
         headID = newCommitID;
         branchesMap.put(activeBranchName, newCommitID);
 
