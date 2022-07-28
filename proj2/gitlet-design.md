@@ -177,9 +177,10 @@ The main logics reside in the **Repository class**.
     4. Delete all files in CWD.
     5. Copy files from the preCommit blobs to CWD.
 24. `public void merge(String branch)`
-    1. Used for `java gitlet.Main merge [branch name]` command
-    2. Create a new Commit object by copying the head from the current branch. Use it as the baseline and modify it. 
-    3. We only need to incorporate the given branch's changes of the ancestor to the current branch.
+    1. Used for `java gitlet.Main merge [branch name]` command.
+    2. Merges files from the given branch into the current branch.
+    3. Create a new Commit object by copying the head from the current branch. Use it as the baseline and modify it. 
+    4. We only need to incorporate the given branch's changes of the ancestor to the current branch.
        1. For the files that the given branch just inherits from the ancestor but did not modify. No action is needed. Since we are using the current branch as baseline.
        2. For the changes the given branch brings to the common ancestor
           1. If the given branch deletes files from the common ancestor
@@ -201,15 +202,15 @@ The main logics reside in the **Repository class**.
                    we have a merge conflict.
        3. For the common files between the given branch and the current branch, if they both modified the file from the common ancestor, we have a conflict
            1. if they have different hash, but only one branch modified the common ancestor, we do not have a conflict
-    4. Steps
+    5. Steps
        1. Call helper function to find the split point, the latest common ancestor.
        2. If there are actually no branches in the tree:
           1. If the split point is the same commit as the given branch, do nothing and return
           2. If the split point is the current branch, then the effect is to check out the given branch
        3. Handle case 3.2.1: the given branch deleted files
-          1. find the files in the common ancestor but not in the given branch
-          2. filter the files that are present in the current branch
-          3. filter the files that have the same hash as the hash in the ancestor, they should be staged for removal (and untracked)
+          1. Set operation to filter the files in the common ancestor but not in the given branch
+          2. Set operation to filter the files that are present in the current branch
+          3. Find the files that have the same hash in current branch as the hash in the ancestor, they should be staged for removal (and untracked)
        4. Handle case 3.2.2: the given branch added new files
           1. find the files in the given branch but not in the ancestor
           2. filter the files that are not present in the current branch, they should be staged for add
@@ -220,7 +221,7 @@ The main logics reside in the **Repository class**.
           3. filter the files that are present in the current branch
               1. if these files in current branch have different hash in the given branch
                  1. If in the current branch, those files are the same as the ancestor, stage them for add.
-                    1. If in the current branch, those files are the different from the ancestor, and different from the current branch, call handleConflict helper function.
+                 2. If in the current branch, those files are the different from the ancestor, and different from the current branch, call handleConflict helper function.
        6. At the end, make a new commit
 25. `public Commit findLatestCommonAncestor(String branch1, String branch2)`
     1. Helper function for merge

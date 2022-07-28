@@ -272,7 +272,7 @@ public class Repository {
      *
      * @param message The user input message for this commit.
      */
-    public static void makeCommit(String message) {
+    public static String makeCommit(String message) {
         readStaticVariables();
         Commit newCommit = new Commit(headID, headCommit);
 
@@ -323,6 +323,8 @@ public class Repository {
         rmFileMap.clear();
 
         saveStaticVariableFiles();
+
+        return newCommitID;
     }
 
 
@@ -605,17 +607,16 @@ public class Repository {
             return;
         }
 
-
         List<String> filesInCWD = plainFilenamesIn(CWD);
         // change headCommit to activeBranchCommit?
         HashMap<String, String> curCommitBlobs = headCommit.getBlobs();
         HashMap<String, String> preCommitBlobs = preCommit.getBlobs();
 
-        // Check if there is any untracked files in CWD
-        // Untracked file means not in addFileMap and not in commitBlobs
+        // Check if there is any untracked file in CWD
+        // which exists in the preCommitBlobs
         for (String fileName : filesInCWD) {
             if ((curCommitBlobs == null || !curCommitBlobs.containsKey(fileName))
-                    && (!addFileMap.containsKey(fileName))) {
+                    && preCommitBlobs != null && preCommitBlobs.containsKey(fileName)) {
                 System.out.println(
                         "There is an untracked file in the way;"
                                 + " delete it, or add and commit it first.");
@@ -624,9 +625,9 @@ public class Repository {
         }
 
         // Delete files that are already committed in the head commit
-        for (String file : filesInCWD) {
-            if (curCommitBlobs != null && curCommitBlobs.containsKey(file)) {
-                restrictedDelete(file);
+        for (String fileName : filesInCWD) {
+            if (curCommitBlobs != null && curCommitBlobs.containsKey(fileName)) {
+                restrictedDelete(fileName);
             }
         }
 
@@ -648,34 +649,243 @@ public class Repository {
     }
 
     /**
-     * @param branch
+     * Merges files from the given branch into the current branch.
+     *
+     * @param givenBranchName The branch which will be merged into the active branch.
      */
-    public static void merge(String branch) {
+    public static void merge(String givenBranchName) {
+        readStaticVariables();
 
+        String activeBranchID = branchesMap.get(activeBranchName);
+        String givenBranchID = branchesMap.get(givenBranchName);
+        String ancestorID = findLatestCommonAncestor(activeBranchName, givenBranchID);
+
+        if (ancestorID.equals(givenBranchID)) {
+            System.out.println("Given branch is an ancestor of the current branch.");
+            return;
+        } else if (ancestorID.equals(activeBranchID)) {
+            checkoutBranch(givenBranchName);
+            System.out.println("Current branch fast-forwarded.");
+            return;
+        }
+
+        // If the givenBranch deletes files from ancestor.
+        givenBranchDeletesFiles(ancestorID, givenBranchID, activeBranchID);
+
+        // If the givenBranch adds files from ancestor.
+        givenBranchAddFiles(ancestorID, givenBranchID, activeBranchID);
+
+        // If the givenBranch modifies files from ancestor.
+        givenBranchModifiesFiles(ancestorID, givenBranchID, activeBranchID);
+
+        // Update parent commit id
+        String message = "Merged " + givenBranchName + " into " + activeBranchName + ".";
+        String tempCommitID = makeCommit(message);
+        Commit newCommit = readCommitFromFile(tempCommitID);
+
+        newCommit.addParentID(givenBranchID);
+        String newCommitID = saveCommitToSHA1Name(COMMITS_DIR, newCommit);
+
+        // Delete temp commit file
+        restrictedDelete(join(COMMITS_DIR, tempCommitID));
+
+        // update head and branch pointers?
+        headID = newCommitID;
+        branchesMap.put(activeBranchName, newCommitID);
+
+        // Clear stagingArea.
+        addFileMap.clear();
+        rmFileMap.clear();
+
+        saveStaticVariableFiles();
     }
 
     /**
-     * @param branch1
-     * @param branch2
-     * @return
+     * Handle case where there is no real split between givenBranch and activeBranch.
+     *
+     * @param ancestorID     The ancestor commit id.
+     * @param givenBranchID  The given branch head commit id.
+     * @param activeBranchID The active branch head commit id.
      */
-    public static Commit findLatestCommonAncestor(String branch1, String branch2) {
-        return null;
+    public static void givenBranchDeletesFiles(
+            String ancestorID, String givenBranchID, String activeBranchID) {
+        readStaticVariables();
+        Commit activeBranchCommit = readCommitFromFile(activeBranchID);
+        Commit givenBranchCommit = readCommitFromFile(givenBranchID);
+        Commit ancestorCommit = readCommitFromFile(ancestorID);
+
+        // Put file names in set for later operation
+        HashSet<String> cwdFiles = new HashSet<>(plainFilenamesIn(CWD));
+        HashSet<String> activeBranchFiles = new HashSet<>(activeBranchCommit.getBlobs().keySet());
+        HashSet<String> givenBranchFiles = new HashSet<>(givenBranchCommit.getBlobs().keySet());
+        HashSet<String> ancestorFiles = new HashSet<>(ancestorCommit.getBlobs().keySet());
+
+        // If the givenBranch deletes files from ancestor.
+        Set<String> deletedFiles = new HashSet<>(ancestorFiles);
+        deletedFiles.removeAll(givenBranchFiles);
+        deletedFiles.retainAll(activeBranchFiles);
+        for (String fileName : deletedFiles) {
+            if (activeBranchCommit.getBlobs().get(fileName).
+                    equals(ancestorCommit.getBlobs().get(fileName))) {
+                rmFileMap.put(fileName, activeBranchCommit.getBlobs().get(fileName));
+            } else {
+                handleConflict(fileName, activeBranchCommit.getBlobs().get(fileName), "");
+            }
+        }
+        saveStaticVariableFiles();
+    }
+
+
+    /**
+     * Handle scenario when givenBrandh add new files to ancestor.
+     *
+     * @param ancestorID     The ancestor commit id.
+     * @param givenBranchID  The given branch head commit id.
+     * @param activeBranchID The active branch head commit id.
+     */
+    public static void givenBranchAddFiles(
+            String ancestorID, String givenBranchID, String activeBranchID) {
+        readStaticVariables();
+
+        Commit activeBranchCommit = readCommitFromFile(activeBranchID);
+        Commit givenBranchCommit = readCommitFromFile(givenBranchID);
+        Commit ancestorCommit = readCommitFromFile(ancestorID);
+
+        // Put file names in set for later operation
+        HashSet<String> cwdFiles = new HashSet<>(plainFilenamesIn(CWD));
+        HashSet<String> activeBranchFiles = new HashSet<>(activeBranchCommit.getBlobs().keySet());
+        HashSet<String> givenBranchFiles = new HashSet<>(givenBranchCommit.getBlobs().keySet());
+        HashSet<String> ancestorFiles = new HashSet<>(ancestorCommit.getBlobs().keySet());
+
+        Set<String> newFiles = new HashSet<>(givenBranchFiles);
+        newFiles.removeAll(ancestorFiles);
+        for (String fileName : newFiles) {
+            if (!activeBranchFiles.contains(fileName)) {
+                addFileMap.put(fileName, givenBranchCommit.getBlobs().get(fileName));
+            } else {
+                String hashInGiven = givenBranchCommit.getBlobs().get(fileName);
+                String hashInActive = activeBranchCommit.getBlobs().get(fileName);
+                if (!hashInGiven.equals(hashInActive)) {
+                    handleConflict(fileName, hashInGiven, hashInActive);
+                }
+            }
+        }
+
+        saveStaticVariableFiles();
     }
 
     /**
-     * @param file1
-     * @param file2
+     * Handle scenario when givenBranch modifies files in ancestor.
+     *
+     * @param ancestorID     The ancestor commit id.
+     * @param givenBranchID  The given branch head commit id.
+     * @param activeBranchID The active branch head commit id.
      */
-    public static void handleConflict(String file1, String file2) {
+    public static void givenBranchModifiesFiles(
+            String ancestorID, String givenBranchID, String activeBranchID) {
+        readStaticVariables();
 
+        Commit activeBranchCommit = readCommitFromFile(activeBranchID);
+        Commit givenBranchCommit = readCommitFromFile(givenBranchID);
+        Commit ancestorCommit = readCommitFromFile(ancestorID);
+
+        // Put file names in set for later operation
+        HashSet<String> cwdFiles = new HashSet<>(plainFilenamesIn(CWD));
+        HashSet<String> activeBranchFiles = new HashSet<>(activeBranchCommit.getBlobs().keySet());
+        HashSet<String> givenBranchFiles = new HashSet<>(givenBranchCommit.getBlobs().keySet());
+        HashSet<String> ancestorFiles = new HashSet<>(ancestorCommit.getBlobs().keySet());
+
+        Set<String> commonFiles = new HashSet<>(givenBranchFiles);
+        commonFiles.retainAll(ancestorFiles);
+        for (String fileName : commonFiles) {
+            String hashInGiven = givenBranchCommit.getBlobs().get(fileName);
+            String hashInAncestor = ancestorCommit.getBlobs().get(fileName);
+            if (hashInGiven.equals(hashInAncestor)) {
+                commonFiles.remove(fileName);
+            }
+        }
+
+        for (String fileName : commonFiles) {
+            if (!activeBranchFiles.contains(fileName)) {
+                addFileMap.put(fileName, givenBranchCommit.getBlobs().get(fileName));
+            } else {
+                String hashInGiven = givenBranchCommit.getBlobs().get(fileName);
+                String hashInActive = activeBranchCommit.getBlobs().get(fileName);
+                if (!hashInGiven.equals(hashInActive)) {
+                    String hashInAncestor = ancestorCommit.getBlobs().get(fileName);
+                    if (hashInActive.equals(hashInAncestor)) {
+                        addFileMap.put(fileName, hashInGiven);
+                    } else {
+                        handleConflict(fileName, hashInGiven, hashInActive);
+                    }
+                }
+            }
+        }
+
+        saveStaticVariableFiles();
     }
 
     /**
-     * @param c
-     * @return
+     * Find the latest common ancestor commit of two branches.
+     *
+     * @param branch1 The first branch name.
+     * @param branch2 The second branch name.
+     * @return The string ID of the latest common ancestor commit.
      */
-    public static HashSet<String> toSet(Commit c) {
-        return null;
+    public static String findLatestCommonAncestor(String branch1, String branch2) {
+        readStaticVariables();
+
+        String ancestor = null;
+
+        String pointer1 = branchesMap.get(branch1);
+        String pointer2 = branchesMap.get(branch2);
+
+        while (!pointer1.equals(pointer2)) {
+            Commit commit1 = readCommitFromFile(pointer1);
+            Commit commit2 = readCommitFromFile(pointer2);
+
+            ArrayList<String> commit1ParentIDs = commit1.getParentCommits();
+            if (commit1ParentIDs == null) {
+                pointer1 = pointer2;
+            }
+            ArrayList<String> commit2ParentIDs = commit2.getParentCommits();
+            if (commit2ParentIDs == null) {
+                pointer2 = pointer1;
+            }
+
+            pointer1 = commit1ParentIDs.get(0);
+            pointer2 = commit2ParentIDs.get(0);
+        }
+
+        ancestor = pointer1;
+        return ancestor;
+    }
+
+    /**
+     * Handle merge conflice when the two file blobs have different content.
+     *
+     * @param fileName     The name of the file under conflict.
+     * @param activeBlobID The blob of the fileName in the active branch.
+     * @param givenBlobID  The blob of the fileName in the given branch.
+     */
+    public static void handleConflict(String fileName, String activeBlobID, String givenBlobID) {
+        readStaticVariables();
+
+        String activeVersion = readContentsAsString(join(BLOBS_DIR, activeBlobID));
+        String givenVersion = readContentsAsString(join(BLOBS_DIR, givenBlobID));
+
+        StringBuilder result = new StringBuilder();
+        result.append("<<<<<<< HEAD\n").
+                append(activeVersion).
+                append("=======\n").
+                append(givenVersion).
+                append(">>>>>>>");
+
+        File targetFile = join(CWD, fileName);
+        writeContents(targetFile, result);
+        String combinedFileID = copyFileToSHA1Name(BLOBS_DIR, targetFile);
+        addFileMap.put(fileName, combinedFileID);
+
+        saveStaticVariableFiles();
     }
 }
