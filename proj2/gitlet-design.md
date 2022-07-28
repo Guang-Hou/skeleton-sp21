@@ -187,7 +187,7 @@ The main logics reside in the **Repository class**.
              1. if these files are absent in the current branch, no action is needed
              2. if these files are present in the current branch, 
                 1. if they are not modified by the current branch, then we need to delete them from the current branch.
-                2. if they are modified in the current branch, we need to keep them, no action is needed.
+                2. if they are modified in the current branch, we have a conflict.
           2. If the given branch added new files to the common ancestor.
              1. If these files are inside the current branch.
                 1. if they have same hashes, no action is needed.
@@ -207,15 +207,16 @@ The main logics reside in the **Repository class**.
        2. If there are actually no branches in the tree:
           1. If the split point is the same commit as the given branch, do nothing and return
           2. If the split point is the current branch, then the effect is to check out the given branch
-       3. Handle case 3.2.1: the given branch deleted files
+       3. Handle case 4.2.1: the given branch deleted files
           1. Set operation to filter the files in the common ancestor but not in the given branch
           2. Set operation to filter the files that are present in the current branch
-          3. Find the files that have the same hash in current branch as the hash in the ancestor, they should be staged for removal (and untracked)
-       4. Handle case 3.2.2: the given branch added new files
+             1. If the file has the same hash in current branch as the hash in the ancestor, they should be staged for removal. 
+             2. If not, call handleConflict function.
+       4. Handle case 4.2.2: the given branch added new files
           1. find the files in the given branch but not in the ancestor
           2. filter the files that are not present in the current branch, they should be staged for add
           3. filter the files that are present in the current branch, and if they have different hash code between given branch and current branch, call handleConflict helper function.
-       5. Handle case 3.2.3: the given branch modified files from ancestor
+       5. Handle case 4.2.3: the given branch modified files from ancestor
           1. find files that are both in given branch and ancestor but they have different hash 
           2. filter the files that are absent in the current branch, add them (to stagingArea? or copy to CWD?)
           3. filter the files that are present in the current branch

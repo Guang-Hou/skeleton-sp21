@@ -658,7 +658,7 @@ public class Repository {
 
         String activeBranchID = branchesMap.get(activeBranchName);
         String givenBranchID = branchesMap.get(givenBranchName);
-        String ancestorID = findLatestCommonAncestor(activeBranchName, givenBranchID);
+        String ancestorID = findLatestCommonAncestor(activeBranchName, givenBranchName);
 
         if (ancestorID.equals(givenBranchID)) {
             System.out.println("Given branch is an ancestor of the current branch.");
