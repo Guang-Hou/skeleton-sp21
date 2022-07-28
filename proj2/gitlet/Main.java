@@ -31,7 +31,7 @@ public class Main {
                 Repository.checkInitialization();
                 validateNumArgs(args, 2);
                 String message = args[1];
-                Repository.makeCommit(message);
+                Repository.makeCommit(message, "");
             }
             case "rm" -> {
                 Repository.checkInitialization();
