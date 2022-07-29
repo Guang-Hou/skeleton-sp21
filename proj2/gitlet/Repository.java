@@ -886,6 +886,7 @@ public class Repository {
     public static void handleConflict(String fileName, String activeBlobID, String givenBlobID) {
         readStaticVariables();
 
+        System.out.println("Encountered a merge conflict.");
         String activeVersion = readContentsAsString(join(BLOBS_DIR, activeBlobID));
         String givenVersion = readContentsAsString(join(BLOBS_DIR, givenBlobID));
 
