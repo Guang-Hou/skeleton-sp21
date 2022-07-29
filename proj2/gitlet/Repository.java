@@ -700,6 +700,7 @@ public class Repository {
     public static void givenBranchDeletesFiles(
             String ancestorID, String givenBranchID, String activeBranchID) {
         readStaticVariables();
+
         Commit activeBranchCommit = readCommitFromFile(activeBranchID);
         Commit givenBranchCommit = readCommitFromFile(givenBranchID);
         Commit ancestorCommit = readCommitFromFile(ancestorID);
@@ -759,7 +760,7 @@ public class Repository {
                 String hashInGiven = givenBranchCommit.getBlobs().get(fileName);
                 String hashInActive = activeBranchCommit.getBlobs().get(fileName);
                 if (!hashInGiven.equals(hashInActive)) {
-                    handleConflict(fileName, hashInGiven, hashInActive);
+                    handleConflict(fileName, hashInActive, hashInGiven);
                 }
             }
         }
@@ -811,7 +812,7 @@ public class Repository {
                         addFileMap.put(fileName, hashInGiven);
                         copyFromBlobToCWD(fileName, hashInGiven);
                     } else {
-                        handleConflict(fileName, hashInGiven, hashInActive);
+                        handleConflict(fileName, hashInActive, hashInGiven);
                     }
                 }
             }

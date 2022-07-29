@@ -1,5 +1,5 @@
 # Check that we can check out a previous version.
-I definitions.inc
+I prelude0.inc
 > init
 <<<
 + wug.txt wug.txt
