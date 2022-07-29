@@ -652,6 +652,16 @@ public class Repository {
     public static void merge(String givenBranchName) {
         readStaticVariables();
 
+        if (!branchesMap.containsKey(givenBranchName)) {
+            System.out.println("A branch with that name does not exist.");
+            return;
+        }
+
+        if (!addFileMap.isEmpty() || !rmFileMap.isEmpty()) {
+            System.out.println("You have uncommitted changes.");
+            return;
+        }
+
         String activeBranchID = branchesMap.get(activeBranchName);
         String givenBranchID = branchesMap.get(givenBranchName);
         String ancestorID = findLatestCommonAncestor(activeBranchName, givenBranchName);
@@ -752,26 +762,35 @@ public class Repository {
             String ancestorID, String givenBranchID, String activeBranchID) {
         readStaticVariables();
 
-        Commit activeBranchCommit = readCommitFromFile(activeBranchID);
-        Commit givenBranchCommit = readCommitFromFile(givenBranchID);
-        Commit ancestorCommit = readCommitFromFile(ancestorID);
+        HashMap<String, String> activeBranchBlobs = readCommitFromFile(activeBranchID).getBlobs();
+        HashMap<String, String> givenBranchBlobs = readCommitFromFile(givenBranchID).getBlobs();
+        HashMap<String, String> ancestorBlobs = readCommitFromFile(ancestorID).getBlobs();
 
         // Put file names in set for later operation
-        HashSet<String> cwdFiles = new HashSet<>(plainFilenamesIn(CWD));
-        HashSet<String> activeBranchFiles = new HashSet<>(activeBranchCommit.getBlobs().keySet());
-        HashSet<String> givenBranchFiles = new HashSet<>(givenBranchCommit.getBlobs().keySet());
-        HashSet<String> ancestorFiles = new HashSet<>(ancestorCommit.getBlobs().keySet());
+        HashSet<String> activeBranchFiles = new HashSet<>();
+        HashSet<String> givenBranchFiles = new HashSet<>();
+        HashSet<String> ancestorFiles = new HashSet<>();
+
+        if (activeBranchBlobs != null) {
+            activeBranchFiles = new HashSet<>(activeBranchBlobs.keySet());
+        }
+        if (givenBranchBlobs != null) {
+            givenBranchFiles = new HashSet<>(givenBranchBlobs.keySet());
+        }
+        if (ancestorBlobs != null) {
+            ancestorFiles = new HashSet<>(ancestorBlobs.keySet());
+        }
 
         Set<String> newFiles = new HashSet<>(givenBranchFiles);
         newFiles.removeAll(ancestorFiles);
         for (String fileName : newFiles) {
             if (!activeBranchFiles.contains(fileName)) {
-                String hashID = givenBranchCommit.getBlobs().get(fileName);
+                String hashID = givenBranchBlobs.get(fileName);
                 addFileMap.put(fileName, hashID);
                 copyFromBlobToCWD(fileName, hashID);
             } else {
-                String hashInGiven = givenBranchCommit.getBlobs().get(fileName);
-                String hashInActive = activeBranchCommit.getBlobs().get(fileName);
+                String hashInGiven = givenBranchBlobs.get(fileName);
+                String hashInActive = activeBranchBlobs.get(fileName);
                 if (!hashInGiven.equals(hashInActive)) {
                     handleConflict(fileName, hashInActive, hashInGiven);
                 }
@@ -792,20 +811,29 @@ public class Repository {
             String ancestorID, String givenBranchID, String activeBranchID) {
         readStaticVariables();
 
-        Commit activeBranchCommit = readCommitFromFile(activeBranchID);
-        Commit givenBranchCommit = readCommitFromFile(givenBranchID);
-        Commit ancestorCommit = readCommitFromFile(ancestorID);
+        HashMap<String, String> activeBranchBlobs = readCommitFromFile(activeBranchID).getBlobs();
+        HashMap<String, String> givenBranchBlobs = readCommitFromFile(givenBranchID).getBlobs();
+        HashMap<String, String> ancestorBlobs = readCommitFromFile(ancestorID).getBlobs();
 
         // Put file names in set for later operation
-        HashSet<String> cwdFiles = new HashSet<>(plainFilenamesIn(CWD));
-        HashSet<String> activeBranchFiles = new HashSet<>(activeBranchCommit.getBlobs().keySet());
-        HashSet<String> givenBranchFiles = new HashSet<>(givenBranchCommit.getBlobs().keySet());
-        HashSet<String> ancestorFiles = new HashSet<>(ancestorCommit.getBlobs().keySet());
+        HashSet<String> activeBranchFiles = new HashSet<>();
+        HashSet<String> givenBranchFiles = new HashSet<>();
+        HashSet<String> ancestorFiles = new HashSet<>();
+
+        if (activeBranchBlobs != null) {
+            activeBranchFiles = new HashSet<>(activeBranchBlobs.keySet());
+        }
+        if (givenBranchBlobs != null) {
+            givenBranchFiles = new HashSet<>(givenBranchBlobs.keySet());
+        }
+        if (ancestorBlobs != null) {
+            ancestorFiles = new HashSet<>(ancestorBlobs.keySet());
+        }
 
         Set<String> targetFiles = new HashSet<>();
         for (String fileName : givenBranchFiles) {
-            String hashInGiven = givenBranchCommit.getBlobs().get(fileName);
-            String hashInAncestor = ancestorCommit.getBlobs().get(fileName);
+            String hashInGiven = givenBranchBlobs.get(fileName);
+            String hashInAncestor = ancestorBlobs.get(fileName);
             if (ancestorFiles.contains(fileName) && !hashInGiven.equals(hashInAncestor)) {
                 targetFiles.add(fileName);
             }
@@ -813,14 +841,14 @@ public class Repository {
 
         for (String fileName : targetFiles) {
             if (!activeBranchFiles.contains(fileName)) {
-                String hashID = givenBranchCommit.getBlobs().get(fileName);
+                String hashID = givenBranchBlobs.get(fileName);
                 copyFromBlobToCWD(fileName, hashID);
                 addFileMap.put(fileName, hashID);
             } else {
-                String hashInGiven = givenBranchCommit.getBlobs().get(fileName);
-                String hashInActive = activeBranchCommit.getBlobs().get(fileName);
+                String hashInGiven = givenBranchBlobs.get(fileName);
+                String hashInActive = activeBranchBlobs.get(fileName);
                 if (!hashInGiven.equals(hashInActive)) {
-                    String hashInAncestor = ancestorCommit.getBlobs().get(fileName);
+                    String hashInAncestor = ancestorBlobs.get(fileName);
                     if (hashInActive.equals(hashInAncestor)) {
                         addFileMap.put(fileName, hashInGiven);
                         copyFromBlobToCWD(fileName, hashInGiven);
