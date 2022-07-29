@@ -252,7 +252,7 @@ public class Repository {
         if (addFileMap != null && addFileMap.containsKey(fileName)) {
             addFileMap.remove(fileName);
         } else if (headCommitBlobs != null && headCommitBlobs.containsKey(fileName)) {
-            String hash = headCommit.getBlobs().get(fileName);
+            String hash = headCommitBlobs.get(fileName);
             rmFileMap.put(fileName, hash);
             File f = join(CWD, fileName);
             if (f.exists()) {
@@ -264,14 +264,6 @@ public class Repository {
         }
         saveStaticVariableFiles();
     }
-
-
-    /**
-     * Create a Commit object with the provided message.
-     * Save the Commit object to commits folder.
-     *
-     * @param message The user input message for this commit.
-     */
 
     /**
      * Create a Commit object with the provided message.
@@ -496,15 +488,9 @@ public class Repository {
         }
 
         String fileHash = fileBlobs.get(fileName);
-        File f = join(BLOBS_DIR, fileHash);
 
         // copy the file to the CWD, and replace the existing target file
-        File target = join(CWD, fileName);
-        try {
-            Files.copy(f.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        copyFromBlobToCWD(fileName, fileHash);
     }
 
     /**
@@ -639,10 +625,10 @@ public class Repository {
             }
         }
 
-        // Delete files that are already committed in the head commit
+        // Delete files in CWD that are already committed in the head commit
         if (curCommitBlobs != null) {
             for (String fileName : curCommitBlobs.keySet()) {
-                restrictedDelete(fileName);
+                restrictedDelete(join(CWD, fileName));
             }
         }
 
@@ -651,14 +637,9 @@ public class Repository {
             for (Map.Entry<String, String> entry : preCommitBlobs.entrySet()) {
                 String fileName = entry.getKey();
                 String fileHash = entry.getValue();
-                File f = join(BLOBS_DIR, fileHash);
-                File newFile = join(CWD, fileName);
                 // copy the file to the CWD and rename to its name
-                try {
-                    Files.copy(f.toPath(), newFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                // overwrite if it already exists
+                copyFromBlobToCWD(fileName, fileHash);
             }
         }
     }
@@ -700,6 +681,7 @@ public class Repository {
         // update head and branch pointers
         headID = newCommitID;
         branchesMap.put(activeBranchName, newCommitID);
+        //branchesMap.put(givenBranchName, newCommitID); ??
 
         // Clear stagingArea.
         addFileMap.clear();
@@ -736,6 +718,7 @@ public class Repository {
             if (activeBranchCommit.getBlobs().get(fileName).
                     equals(ancestorCommit.getBlobs().get(fileName))) {
                 rmFileMap.put(fileName, activeBranchCommit.getBlobs().get(fileName));
+                restrictedDelete(join(CWD, fileName));
             } else {
                 handleConflict(fileName, activeBranchCommit.getBlobs().get(fileName), "");
             }
@@ -769,7 +752,9 @@ public class Repository {
         newFiles.removeAll(ancestorFiles);
         for (String fileName : newFiles) {
             if (!activeBranchFiles.contains(fileName)) {
-                addFileMap.put(fileName, givenBranchCommit.getBlobs().get(fileName));
+                String hashID = givenBranchCommit.getBlobs().get(fileName);
+                addFileMap.put(fileName, hashID);
+                copyFromBlobToCWD(fileName, hashID);
             } else {
                 String hashInGiven = givenBranchCommit.getBlobs().get(fileName);
                 String hashInActive = activeBranchCommit.getBlobs().get(fileName);
@@ -815,7 +800,9 @@ public class Repository {
 
         for (String fileName : commonFiles) {
             if (!activeBranchFiles.contains(fileName)) {
-                addFileMap.put(fileName, givenBranchCommit.getBlobs().get(fileName));
+                String hashID = givenBranchCommit.getBlobs().get(fileName);
+                copyFromBlobToCWD(fileName, hashID);
+                addFileMap.put(fileName, hashID);
             } else {
                 String hashInGiven = givenBranchCommit.getBlobs().get(fileName);
                 String hashInActive = activeBranchCommit.getBlobs().get(fileName);
@@ -823,6 +810,7 @@ public class Repository {
                     String hashInAncestor = ancestorCommit.getBlobs().get(fileName);
                     if (hashInActive.equals(hashInAncestor)) {
                         addFileMap.put(fileName, hashInGiven);
+                        copyFromBlobToCWD(fileName, hashInGiven);
                     } else {
                         handleConflict(fileName, hashInGiven, hashInActive);
                     }
@@ -831,6 +819,24 @@ public class Repository {
         }
 
         saveStaticVariableFiles();
+    }
+
+
+    /**
+     * Copy the file in BLOBS_DIR folder which has name of fileHash,
+     * to the CWD folder to have the name of fileName.
+     * If the fileName already exist, it will be overwritten.
+     * @param fileName The final file name in CWD.
+     * @param fileHash The fileHash in BLOBS_DIR folder.
+     */
+    public static void copyFromBlobToCWD(String fileName, String fileHash) {
+        File target = join(CWD, fileName);
+        File source = join(BLOBS_DIR, fileHash);
+        try {
+            Files.copy(source.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -853,16 +859,18 @@ public class Repository {
             Commit commit2 = readCommitFromFile(pointer2);
 
             ArrayList<String> commit1ParentIDs = commit1.getParentCommits();
-            if (commit1ParentIDs == null) {
+            if (commit1ParentIDs == null || commit1ParentIDs.isEmpty()) {
                 pointer1 = pointer2;
-            }
-            ArrayList<String> commit2ParentIDs = commit2.getParentCommits();
-            if (commit2ParentIDs == null) {
-                pointer2 = pointer1;
+            } else {
+                pointer1 = commit1ParentIDs.get(0);
             }
 
-            pointer1 = commit1ParentIDs.get(0);
-            pointer2 = commit2ParentIDs.get(0);
+            ArrayList<String> commit2ParentIDs = commit2.getParentCommits();
+            if (commit2ParentIDs == null || commit1ParentIDs.isEmpty()) {
+                pointer2 = pointer1;
+            } else {
+                pointer2 = commit2ParentIDs.get(0);
+            }
         }
 
         ancestor = pointer1;
