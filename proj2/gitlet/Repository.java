@@ -788,17 +788,16 @@ public class Repository {
         HashSet<String> givenBranchFiles = new HashSet<>(givenBranchCommit.getBlobs().keySet());
         HashSet<String> ancestorFiles = new HashSet<>(ancestorCommit.getBlobs().keySet());
 
-        Set<String> commonFiles = new HashSet<>(givenBranchFiles);
-        commonFiles.retainAll(ancestorFiles);
-        for (String fileName : commonFiles) {
+        Set<String> targetFiles = new HashSet<>();
+        for (String fileName : givenBranchFiles) {
             String hashInGiven = givenBranchCommit.getBlobs().get(fileName);
             String hashInAncestor = ancestorCommit.getBlobs().get(fileName);
-            if (hashInGiven.equals(hashInAncestor)) {
-                commonFiles.remove(fileName);
+            if (ancestorFiles.contains(fileName) && !hashInGiven.equals(hashInAncestor)) {
+                targetFiles.add(fileName);
             }
         }
 
-        for (String fileName : commonFiles) {
+        for (String fileName : targetFiles) {
             if (!activeBranchFiles.contains(fileName)) {
                 String hashID = givenBranchCommit.getBlobs().get(fileName);
                 copyFromBlobToCWD(fileName, hashID);
