@@ -897,7 +897,7 @@ public class Repository {
                 append(">>>>>>>");
 
         File targetFile = join(CWD, fileName);
-        writeContents(targetFile, result);
+        writeContents(targetFile, result.toString());
         String combinedFileID = copyFileToSHA1Name(BLOBS_DIR, targetFile);
         addFileMap.put(fileName, combinedFileID);
 
