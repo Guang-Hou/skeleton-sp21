@@ -656,7 +656,10 @@ public class Repository {
         String givenBranchID = branchesMap.get(givenBranchName);
         String ancestorID = findLatestCommonAncestor(activeBranchName, givenBranchName);
 
-        if (ancestorID.equals(givenBranchID)) {
+        if (givenBranchName.equals(activeBranchName)) {
+            System.out.println("Cannot merge a branch with itself.");
+            return;
+        } else if (ancestorID.equals(givenBranchID)) {
             System.out.println("Given branch is an ancestor of the current branch.");
             return;
         } else if (ancestorID.equals(activeBranchID)) {
@@ -699,29 +702,39 @@ public class Repository {
      */
     public static void givenBranchDeletesFiles(
             String ancestorID, String givenBranchID, String activeBranchID) {
+
         readStaticVariables();
 
-        Commit activeBranchCommit = readCommitFromFile(activeBranchID);
-        Commit givenBranchCommit = readCommitFromFile(givenBranchID);
-        Commit ancestorCommit = readCommitFromFile(ancestorID);
+        HashMap<String, String> activeBranchBlobs = readCommitFromFile(activeBranchID).getBlobs();
+        HashMap<String, String> givenBranchBlobs = readCommitFromFile(givenBranchID).getBlobs();
+        HashMap<String, String> ancestorBlobs = readCommitFromFile(ancestorID).getBlobs();
 
         // Put file names in set for later operation
-        HashSet<String> cwdFiles = new HashSet<>(plainFilenamesIn(CWD));
-        HashSet<String> activeBranchFiles = new HashSet<>(activeBranchCommit.getBlobs().keySet());
-        HashSet<String> givenBranchFiles = new HashSet<>(givenBranchCommit.getBlobs().keySet());
-        HashSet<String> ancestorFiles = new HashSet<>(ancestorCommit.getBlobs().keySet());
+        HashSet<String> activeBranchFiles = new HashSet<>();
+        HashSet<String> givenBranchFiles = new HashSet<>();
+        HashSet<String> ancestorFiles = new HashSet<>();
+
+        if (activeBranchBlobs != null) {
+            activeBranchFiles = new HashSet<>(activeBranchBlobs.keySet());
+        }
+        if (givenBranchBlobs != null) {
+            givenBranchFiles = new HashSet<>(givenBranchBlobs.keySet());
+        }
+        if (ancestorBlobs != null) {
+            ancestorFiles = new HashSet<>(ancestorBlobs.keySet());
+        }
 
         // If the givenBranch deletes files from ancestor.
         Set<String> deletedFiles = new HashSet<>(ancestorFiles);
         deletedFiles.removeAll(givenBranchFiles);
         deletedFiles.retainAll(activeBranchFiles);
         for (String fileName : deletedFiles) {
-            if (activeBranchCommit.getBlobs().get(fileName).
-                    equals(ancestorCommit.getBlobs().get(fileName))) {
-                rmFileMap.put(fileName, activeBranchCommit.getBlobs().get(fileName));
+            if (activeBranchBlobs.get(fileName).
+                    equals(ancestorBlobs.get(fileName))) {
+                rmFileMap.put(fileName, activeBranchBlobs.get(fileName));
                 restrictedDelete(join(CWD, fileName));
             } else {
-                handleConflict(fileName, activeBranchCommit.getBlobs().get(fileName), "");
+                handleConflict(fileName, activeBranchBlobs.get(fileName), "");
             }
         }
         saveStaticVariableFiles();
@@ -826,6 +839,7 @@ public class Repository {
      * Copy the file in BLOBS_DIR folder which has name of fileHash,
      * to the CWD folder to have the name of fileName.
      * If the fileName already exist, it will be overwritten.
+     *
      * @param fileName The final file name in CWD.
      * @param fileHash The fileHash in BLOBS_DIR folder.
      */
@@ -866,7 +880,7 @@ public class Repository {
             }
 
             ArrayList<String> commit2ParentIDs = commit2.getParentCommits();
-            if (commit2ParentIDs == null || commit1ParentIDs.isEmpty()) {
+            if (commit2ParentIDs == null || commit2ParentIDs.isEmpty()) {
                 pointer2 = pointer1;
             } else {
                 pointer2 = commit2ParentIDs.get(0);
@@ -889,7 +903,10 @@ public class Repository {
 
         System.out.println("Encountered a merge conflict.");
         String activeVersion = readContentsAsString(join(BLOBS_DIR, activeBlobID));
-        String givenVersion = readContentsAsString(join(BLOBS_DIR, givenBlobID));
+        String givenVersion = "";
+        if (givenBlobID.length() != 0) {
+            givenVersion = readContentsAsString(join(BLOBS_DIR, givenBlobID));
+        }
 
         StringBuilder result = new StringBuilder();
         result.append("<<<<<<< HEAD\n").
