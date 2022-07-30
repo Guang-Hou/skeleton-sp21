@@ -608,22 +608,10 @@ public class Repository {
             return;
         }
 
-        List<String> filesInCWD = plainFilenamesIn(CWD);
-        // change headCommit to activeBranchCommit?
+        handleUntrackedFileOverwritten(headID, preCommitID);
+
         HashMap<String, String> curCommitBlobs = headCommit.getBlobs();
         HashMap<String, String> preCommitBlobs = preCommit.getBlobs();
-
-        // Check if there is any untracked file in CWD
-        // which exists in the preCommitBlobs
-        for (String fileName : filesInCWD) {
-            if ((curCommitBlobs == null || !curCommitBlobs.containsKey(fileName))
-                    && preCommitBlobs != null && preCommitBlobs.containsKey(fileName)) {
-                System.out.println(
-                        "There is an untracked file in the way;"
-                                + " delete it, or add and commit it first.");
-                System.exit(0);
-            }
-        }
 
         // Delete files in CWD that are already committed in the head commit
         if (curCommitBlobs != null) {
@@ -640,6 +628,35 @@ public class Repository {
                 // copy the file to the CWD and rename to its name
                 // overwrite if it already exists
                 copyFromBlobToCWD(fileName, fileHash);
+            }
+        }
+    }
+
+
+    /**
+     * Handle the case where there is untracked file which will be overwritten
+     * by the preCommitID.
+     *
+     * @param curCommitID The current commit id.
+     * @param preCommitID The previous commit id.
+     */
+    public static void handleUntrackedFileOverwritten(String curCommitID, String preCommitID) {
+        List<String> filesInCWD = plainFilenamesIn(CWD);
+        Commit curCommit = readCommitFromFile(curCommitID);
+        Commit preCommit = readCommitFromFile(preCommitID);
+
+        HashMap<String, String> curCommitBlobs = curCommit.getBlobs();
+        HashMap<String, String> preCommitBlobs = preCommit.getBlobs();
+
+        // Check if there is any untracked file in CWD
+        // which exists in the preCommitBlobs
+        for (String fileName : filesInCWD) {
+            if ((curCommitBlobs == null || !curCommitBlobs.containsKey(fileName))
+                    && preCommitBlobs != null && preCommitBlobs.containsKey(fileName)) {
+                System.out.println(
+                        "There is an untracked file in the way;"
+                                + " delete it, or add and commit it first.");
+                System.exit(0);
             }
         }
     }
@@ -677,6 +694,8 @@ public class Repository {
             System.out.println("Current branch fast-forwarded.");
             return;
         }
+
+        handleUntrackedFileOverwritten(activeBranchID, givenBranchID);
 
         // If the givenBranch deletes files from ancestor.
         givenBranchDeletesFiles(ancestorID, givenBranchID, activeBranchID);
@@ -832,10 +851,12 @@ public class Repository {
 
         Set<String> targetFiles = new HashSet<>();
         for (String fileName : givenBranchFiles) {
-            String hashInGiven = givenBranchBlobs.get(fileName);
-            String hashInAncestor = ancestorBlobs.get(fileName);
-            if (ancestorFiles.contains(fileName) && !hashInGiven.equals(hashInAncestor)) {
-                targetFiles.add(fileName);
+            if (givenBranchBlobs != null && ancestorBlobs != null) {
+                String hashInGiven = givenBranchBlobs.get(fileName);
+                String hashInAncestor = ancestorBlobs.get(fileName);
+                if (ancestorFiles.contains(fileName) && !hashInGiven.equals(hashInAncestor)) {
+                    targetFiles.add(fileName);
+                }
             }
         }
 
