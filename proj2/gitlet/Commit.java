@@ -108,7 +108,7 @@ public class Commit implements Serializable, Comparable<Commit> {
      *
      * @return The parents in ArrayList<parentCommitID>.
      */
-    public ArrayList<String> getParentCommits() {
+    public ArrayList<String> getParentCommitIDs() {
         return parents;
     }
 

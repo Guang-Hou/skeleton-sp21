@@ -346,7 +346,7 @@ public class Repository {
         String curID = headID;
         while (cur != null) {
             log.add(cur.toString(curID));
-            ArrayList<String> parentCommitIDs = cur.getParentCommits();
+            ArrayList<String> parentCommitIDs = cur.getParentCommitIDs();
             if (parentCommitIDs == null) {
                 break;
             }
@@ -914,23 +914,26 @@ public class Repository {
 
         String ancestor = null;
 
-        String pointer1 = branchesMap.get(branch1);
-        String pointer2 = branchesMap.get(branch2);
+        String branch1ID = branchesMap.get(branch1);
+        String branch2ID = branchesMap.get(branch2);
+        
+        String pointer1 = branch1ID;
+        String pointer2 = branch2ID;
 
         while (!pointer1.equals(pointer2)) {
             Commit commit1 = readCommitFromFile(pointer1);
             Commit commit2 = readCommitFromFile(pointer2);
 
-            ArrayList<String> commit1ParentIDs = commit1.getParentCommits();
+            ArrayList<String> commit1ParentIDs = commit1.getParentCommitIDs();
             if (commit1ParentIDs == null || commit1ParentIDs.isEmpty()) {
-                pointer1 = pointer2;
+                pointer1 = branch2;
             } else {
                 pointer1 = commit1ParentIDs.get(0);
             }
 
-            ArrayList<String> commit2ParentIDs = commit2.getParentCommits();
+            ArrayList<String> commit2ParentIDs = commit2.getParentCommitIDs();
             if (commit2ParentIDs == null || commit2ParentIDs.isEmpty()) {
-                pointer2 = pointer1;
+                pointer2 = branch1;
             } else {
                 pointer2 = commit2ParentIDs.get(0);
             }
