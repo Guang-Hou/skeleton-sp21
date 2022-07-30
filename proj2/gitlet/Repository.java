@@ -917,29 +917,45 @@ public class Repository {
         String branch1ID = branchesMap.get(branch1);
         String branch2ID = branchesMap.get(branch2);
 
+        // Put branch1's parent commit ids in a set
+        // Here we can use either BFS or DFS
+        Set<String> branch1Parents = new HashSet<>();
+        Deque<String> bfsQueue1 = new ArrayDeque();
+        bfsQueue1.add(branch1ID);
+
+        while (!bfsQueue1.isEmpty()) {
+            String commitID = bfsQueue1.removeFirst();
+            branch1Parents.add(commitID);
+
+            Commit c = readCommitFromFile(commitID);
+
+            ArrayList<String> parentIDs = c.getParentCommitIDs();
+            bfsQueue1.addAll(parentIDs);
+        }
+
+
+        // Trace up from branch2ID to check its parents,
+        // the first commitID which exists in branch1Parents is the latest common ancestor
+        // Here we must use BFS to check the closest commits first
         String pointer1 = branch1ID;
         String pointer2 = branch2ID;
 
-        while (!pointer1.equals(pointer2)) {
-            Commit commit1 = readCommitFromFile(pointer1);
-            Commit commit2 = readCommitFromFile(pointer2);
+        Deque<String> bfsQueue2 = new ArrayDeque();
+        bfsQueue2.add(branch2ID);
 
-            ArrayList<String> commit1ParentIDs = commit1.getParentCommitIDs();
-            if (commit1ParentIDs == null || commit1ParentIDs.isEmpty()) {
-                pointer1 = branch2ID;
-            } else {
-                pointer1 = commit1ParentIDs.get(0);
+        while (!bfsQueue2.isEmpty()) {
+            String commitID = bfsQueue2.removeFirst();
+            if (branch1Parents.contains(commitID)) {
+                ancestor = commitID;
+                break;
             }
 
-            ArrayList<String> commit2ParentIDs = commit2.getParentCommitIDs();
-            if (commit2ParentIDs == null || commit2ParentIDs.isEmpty()) {
-                pointer2 = branch1ID;
-            } else {
-                pointer2 = commit2ParentIDs.get(0);
-            }
+            Commit c = readCommitFromFile(commitID);
+
+            ArrayList<String> parentIDs = c.getParentCommitIDs();
+            bfsQueue2.addAll(parentIDs);
         }
 
-        ancestor = pointer1;
         return ancestor;
     }
 
