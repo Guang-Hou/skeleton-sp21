@@ -935,7 +935,6 @@ public class Repository {
             }
         }
 
-
         // Trace up from branch2ID to check its parents,
         // the first commitID which exists in branch1Parents is the latest common ancestor
         // Here we must use BFS to check the closest commits first
@@ -985,7 +984,7 @@ public class Repository {
                 append(activeVersion).
                 append("=======\n").
                 append(givenVersion).
-                append(">>>>>>>");
+                append(">>>>>>>\n");
 
         File targetFile = join(CWD, fileName);
         writeContents(targetFile, result.toString());
