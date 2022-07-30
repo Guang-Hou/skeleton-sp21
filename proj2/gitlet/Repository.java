@@ -916,7 +916,7 @@ public class Repository {
 
         String branch1ID = branchesMap.get(branch1);
         String branch2ID = branchesMap.get(branch2);
-        
+
         String pointer1 = branch1ID;
         String pointer2 = branch2ID;
 
@@ -926,14 +926,14 @@ public class Repository {
 
             ArrayList<String> commit1ParentIDs = commit1.getParentCommitIDs();
             if (commit1ParentIDs == null || commit1ParentIDs.isEmpty()) {
-                pointer1 = branch2;
+                pointer1 = branch2ID;
             } else {
                 pointer1 = commit1ParentIDs.get(0);
             }
 
             ArrayList<String> commit2ParentIDs = commit2.getParentCommitIDs();
             if (commit2ParentIDs == null || commit2ParentIDs.isEmpty()) {
-                pointer2 = branch1;
+                pointer2 = branch1ID;
             } else {
                 pointer2 = commit2ParentIDs.get(0);
             }
