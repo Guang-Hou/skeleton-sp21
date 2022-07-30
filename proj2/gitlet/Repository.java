@@ -963,7 +963,7 @@ public class Repository {
     }
 
     /**
-     * Handle merge conflice when the two file blobs have different content.
+     * Handle merge conflice when the two file blobs have different content. 
      *
      * @param fileName     The name of the file under conflict.
      * @param activeBlobID The blob of the fileName in the active branch.
