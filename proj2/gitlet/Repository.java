@@ -930,7 +930,7 @@ public class Repository {
             Commit c = readCommitFromFile(commitID);
 
             ArrayList<String> parentIDs = c.getParentCommitIDs();
-            if (parentIDs != null || !parentIDs.isEmpty()) {
+            if (parentIDs != null && !parentIDs.isEmpty()) {
                 bfsQueue1.addAll(parentIDs);
             }
         }
@@ -955,7 +955,7 @@ public class Repository {
             Commit c = readCommitFromFile(commitID);
 
             ArrayList<String> parentIDs = c.getParentCommitIDs();
-            if (parentIDs != null || !parentIDs.isEmpty()) {
+            if (parentIDs != null && !parentIDs.isEmpty()) {
                 bfsQueue2.addAll(parentIDs);
             }
         }
