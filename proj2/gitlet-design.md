@@ -265,9 +265,8 @@ The directory structure looks like this:
 ```
 CWD                             <==== The current working directory is.
 └── .gitlet                     <==== All persistant data is stored within this directory.
-    ├── stagingArea             <==== Directory for the stagingArea files.
-        ├── ADD                 <==== A serialized hashmap<String, String> stores fileName : hashID for files staged to add.
-        ├── RM                  <==== A serialized hashmap<String, String> stores fileName : hashID for files staged to remove.
+    ├── stagingADD              <==== A serialized hashmap<String, String> stores fileName : hashID for files staged to add.
+    ├── stagingRM               <==== A serialized hashmap<String, String> stores fileName : hashID for files staged to remove.
     ├── BRANCHES                <==== A serialized hashmap<String, String> stores branchName : hash of the branch's latest commit.
     ├── ACTIVE_BRANCH           <==== File storing the string of the active branch name.  
     ├── HEAD                    <==== A serialized String storing the name of the current branch.

@@ -19,7 +19,7 @@ public class Commit implements Serializable, Comparable<Commit> {
     /* The Date object representing the timestamp of a Commit. */
     private Date timestamp;
     /* The parent commits of current commit, stored as String in an Array. */
-    private ArrayList<String> parents = new ArrayList<>();
+    private ArrayList<String> parentIDs = new ArrayList<>();
     /* The HashMap storing all the files in the format of fileName: hash. */
     private HashMap<String, String> blobs = new HashMap<>();
 
@@ -29,7 +29,7 @@ public class Commit implements Serializable, Comparable<Commit> {
     public Commit() {
         message = "initial commit";
         timestamp = new Date(0);
-        parents = null;
+        parentIDs = null;
         blobs = null;
     }
 
@@ -42,8 +42,8 @@ public class Commit implements Serializable, Comparable<Commit> {
      */
     public Commit(String parentCommitID, Commit parentCommit) {
         timestamp = new Date();
-        parents.clear();
-        parents.add(parentCommitID);
+        parentIDs.clear();
+        parentIDs.add(parentCommitID);
         Map<String, String> parentBlobs = parentCommit.getBlobs();
         if (parentBlobs != null) {
             blobs = new HashMap<String, String>(parentBlobs);
@@ -57,7 +57,7 @@ public class Commit implements Serializable, Comparable<Commit> {
     public String toString() {
         return "Date - " + timestamp + "\n"
                 + "message - " + message + "\n"
-                + "parents - " + parents + "\n"
+                + "parents - " + parentIDs + "\n"
                 + "blobs - " + blobs;
     }
 
@@ -67,9 +67,9 @@ public class Commit implements Serializable, Comparable<Commit> {
     public String toString(String id) {
         String merge = "";
 
-        if (parents != null && parents.size() > 1) {
+        if (parentIDs != null && parentIDs.size() > 1) {
             merge += "Merge: ";
-            for (String parent : parents) {
+            for (String parent : parentIDs) {
                 merge += parent.substring(0, 7) + " ";
             }
             merge += "\n";
@@ -109,7 +109,7 @@ public class Commit implements Serializable, Comparable<Commit> {
      * @return The parents in ArrayList<parentCommitID>.
      */
     public ArrayList<String> getParentCommitIDs() {
-        return parents;
+        return parentIDs;
     }
 
     /**
@@ -136,7 +136,7 @@ public class Commit implements Serializable, Comparable<Commit> {
      * @param parentID The parentID.
      */
     public void addParentID(String parentID) {
-        this.parents.add(parentID);
+        this.parentIDs.add(parentID);
     }
 
     /**

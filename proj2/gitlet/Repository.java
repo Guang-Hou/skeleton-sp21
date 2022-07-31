@@ -27,8 +27,6 @@ public class Repository {
     private static final File COMMITS_DIR = join(GITLET_DIR, "commits");
     /* The .gitlet/blobs directory to store file blobs. */
     private static final File BLOBS_DIR = join(GITLET_DIR, "blobs");
-    /* The .gitlet/stagingArea directory. */
-    private static final File STAGING_DIR = join(GITLET_DIR, "stagingArea");
 
     /* File storing the HashMap<String, String> of branchName : commitID. */
     private static File branchesFile = join(GITLET_DIR, "BRANCHES");
@@ -38,10 +36,10 @@ public class Repository {
     private static File activeBranchFile = join(GITLET_DIR, "ACTIVE_BRANCH");
     /* File storing HashMap<String, String> of fileName : fileHash
      * for all files staged to add. */
-    private static File addFile = join(STAGING_DIR, "ADD");
+    private static File addFile = join(GITLET_DIR, "stagingADD");
     /* File storing HashMap<String, String> of fileName : fileHash
      * for all files staged to remove. */
-    private static File rmFile = join(STAGING_DIR, "RM");
+    private static File rmFile = join(GITLET_DIR, "stagingRM");
 
     /* HashMap<String, String> for branchName : commitID. */
     private static HashMap<String, String> branchesMap = new HashMap<>();
@@ -71,7 +69,6 @@ public class Repository {
         GITLET_DIR.mkdir();
         COMMITS_DIR.mkdir();
         BLOBS_DIR.mkdir();
-        STAGING_DIR.mkdir();
 
         Commit initial = new Commit();
         String hash = saveCommitToSHA1Name(COMMITS_DIR, initial);
@@ -423,7 +420,7 @@ public class Repository {
         StringBuilder output = new StringBuilder();
 
         // Add all branch names.
-        Set<String> allBranches = branchesMap.keySet();
+        TreeSet<String> allBranches = new TreeSet<>(branchesMap.keySet());
         output.append("=== Branches ===\n").append("*" + activeBranchName + "\n");
         for (String b : allBranches) {
             if (!b.equals(activeBranchName)) {
@@ -434,7 +431,7 @@ public class Repository {
 
         // Add file names from addFileMap.
         output.append("=== Staged Files ===\n");
-        Set<String> allAddFiles = addFileMap.keySet();
+        TreeSet<String> allAddFiles = new TreeSet<>(addFileMap.keySet());
         for (String f : allAddFiles) {
             output.append(f + "\n");
         }
@@ -442,7 +439,7 @@ public class Repository {
 
         // Add file names from rmFileMap.
         output.append("=== Removed Files ===\n");
-        Set<String> allRmFiles = rmFileMap.keySet();
+        TreeSet<String> allRmFiles = new TreeSet(rmFileMap.keySet());
         for (String f : allRmFiles) {
             output.append(f + "\n");
         }
@@ -450,13 +447,68 @@ public class Repository {
 
         // Add modified files but not staged for commit.
         output.append("=== Modifications Not Staged For Commit ===\n");
+        TreeSet<String> modifiedButNotTrackedFiles = getModifiedButNotTrackedFiles();
+        for (String f : modifiedButNotTrackedFiles) {
+            output.append(f + "\n");
+        }
         output.append("\n");
 
         // Add untracked file names.
         output.append("=== Untracked Files ===\n");
-        //output.append("\n");
-
+        HashMap<String, String> fileBlobs = headCommit.getBlobs();
+        List<String> fileNames = plainFilenamesIn(CWD);
+        for (String fileName : fileNames) {
+            if (!addFileMap.containsKey(fileName) && !fileBlobs.containsKey(fileName)) {
+                output.append(fileName).append("\n");
+            }
+        }
+        output.append("\n");
         System.out.println(output);
+    }
+
+    /**
+     * Get file names in a TreeSet if they are modified,
+     * but not tracked.
+     * @return The TreeSet of the filtered file names.
+     */
+    public static TreeSet<String> getModifiedButNotTrackedFiles() {
+        readStaticVariables();
+        TreeSet<String> modifiedButNotTrackedFiles = new TreeSet();
+        // Files that were committed before and now are changed but not staged in addFileMap.
+        HashMap<String, String> fileBlobs = headCommit.getBlobs();
+        if (fileBlobs != null) {
+            for (String fileName : fileBlobs.keySet()) {
+                String currentContent = readContentsAsString(join(CWD, fileName));
+                String currentContentHash = sha1(currentContent);
+                String commitContentHash = fileBlobs.get(fileName);
+                if (!addFileMap.containsKey(fileName)
+                        && !currentContentHash.equals(commitContentHash)) {
+                    modifiedButNotTrackedFiles.add(fileName);
+                }
+            }
+        }
+        // Files that were staged before and now are changed after being staged.
+        if (!addFileMap.isEmpty()) {
+            for (String fileName : addFileMap.keySet()) {
+                String currentContent = readContentsAsString(join(CWD, fileName));
+                String currentContentHash = sha1(currentContent);
+                String stagedContentHash = addFileMap.get(fileName);
+                if (!currentContentHash.equals(stagedContentHash)) {
+                    modifiedButNotTrackedFiles.add(fileName);
+                }
+            }
+        }
+        // Files that were deleted from CWD, still tracked in current commit
+        // but they are not in rmFileMap
+        if (fileBlobs != null) {
+            for (String fileName : fileBlobs.keySet()) {
+                File f = join(CWD, fileName);
+                if (!f.exists()) {
+                    modifiedButNotTrackedFiles.add(fileName);
+                }
+            }
+        }
+        return modifiedButNotTrackedFiles;
     }
 
     /**
@@ -963,7 +1015,7 @@ public class Repository {
     }
 
     /**
-     * Handle merge conflice when the two file blobs have different content. 
+     * Handle merge conflice when the two file blobs have different content.
      *
      * @param fileName     The name of the file under conflict.
      * @param activeBlobID The blob of the fileName in the active branch.
