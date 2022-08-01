@@ -464,7 +464,7 @@ public class Repository {
                 output.append(fileName).append("\n");
             }
         }
-        //output.append("\n");
+        output.append("\n");
         System.out.println(output);
     }
 
