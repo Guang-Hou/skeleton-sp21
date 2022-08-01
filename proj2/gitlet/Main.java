@@ -108,17 +108,9 @@ public class Main {
         }
     }
 
-
     public static void validateNumArgs(String[] args, int n) {
         if (args.length != n) {
             System.out.println("Incorrect operands.");
         }
-    }
-
-    public static void exitWithError(String message) {
-        if (message != null && !message.isEmpty()) {
-            System.out.println(message);
-        }
-        System.exit(0);
     }
 }
