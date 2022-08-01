@@ -5,42 +5,39 @@
 ## Classes and Data Structures
 ### Class 1: Main
 This is the entry point to our program. 
-It takes in arguments from the command line and based on the command (the first element of the args array) 
-calls the corresponding command in Repository class which will actually execute the logic of the command. 
-It also validates the arguments based on the command to ensure that enough arguments were passed in.
+It takes in arguments from the command line and based on the command it calls the corresponding methods in the Repository class which will actually execute the logic of the command. 
+It also validates the arguments to ensure that enough arguments were passed in.
 #### Fields
-This class has no fields and hence no associated state: it simply validates arguments and defers the execution to the Repository class.
+This class has no fields and hence no associated state: it simply validates arguments and defers the execution to the Repository class methods.
 
 
 ### Class 2: Repository
-This class will handle all input commands by reading/writing from/to the correct files, setting up persistence, and additional error checking.
+This class will handle all user input commands with class methods. The methods operate by reading/writing from/to the correct files, setting up persistence, and additional error checking.
 #### Fields
 1. `private static final File CWD` The Current Working Directory. It provides a way to access other files after adding the relevant relative path.
 2. `private static final File GITLET_DIR` The hidden `.gitlet` directory. This is where all the persistence files will be stored.
 3. `private static final File COMMITS_DIR` The .gitlet/commits directory to store serialized Commit objects.
 4. `private static final File BLOBS_DIR` The .gitlet/blobs directory to store file blobs.
-5. `private static final File STAGING_DIR` The .gitlet/stagingArea directory.
-6. `private static File branchesFile` File storing the HashMap<String, String> of branchName : commitID. 
-7. `private static File headFile` File storing the string of the head Commit ID.
-8. `private static File activeBranchFile` File storing the string of the active branch name.
-9. `private static File addFile` File storing HashMap<String, String> of fileName : fileHash for all files staged to add.
+5. `private static File branchesFile` File storing the HashMap<String, String> of branchName : commitID. 
+6. `private static File headFile` File storing the string of the head Commit ID.
+7. `private static File activeBranchFile` File storing the string of the active branch name.
+8. `private static File addFile` File storing HashMap<String, String> of fileName : fileHash for all files staged to add.
 9. `private static File rmFile` File storing HashMap<String, String> of fileName : fileHash for all files staged to remove.
 10. `private static HashMap<String, String> branches` HashMap<String, String> for branchName : commitID.
 11. `private static String headID` Head Commit hash ID.
 12. `private static String activeBranchName`  Active branch name in String.
 13. `private static HashMap<String, String> addFileMap` HashMap<String, String> of fileName : fileHash for all files staged to add.
 14. `private static HashMap<String, String> rmFileMap` HashMap<String, String> of fileName : fileHash for all files staged to remove.
-15. `private static Commit headCommit` The head Commit object.This variable is not stored as file.
+15. `private static Commit headCommit` The head Commit object. This variable is not stored as file.
 
 
 ### Class 3: Commit
-This class represents a `Commit` that will be stored in a file. Because each Commit will have a unique name (SHA hash code), 
-we may simply use that as the name of the file that the object is serialized to.
+This class represents a `Commit` object that will be stored as a file. The file name is a unique SHA1 hash of the file content.
 #### Fields
-1. `public String message` The message of this Commit.
-2. `public Date timeStamp` The Date object representing the timestamp of a Commit.
-3. `private ArrayList<String> parents` The parent commits of current commit, stored as String in an Array.
-4. `public Map<String, String> blobs` The HashMap storing all the files in the format of fileName: hash.
+1. `public String message` The message the user provides during making the Commit.
+2. `public Date timeStamp` The Date object representing the timestamp when the Commit is cretaed.
+3. `private ArrayList<String> parentIDs` The parent commit IDs for the commit, stored as String in an ArrayList.
+4. `public Map<String, String> blobs` The HashMap storing all the committed files in the format of fileName: fileHash.
 
 
 ## Algorithms
@@ -53,40 +50,39 @@ The main logics reside in the **Repository class**.
    2. Create the necessary directories and make the initial commit.
    3. If there is already a Gitlet version-control system in the current directory, it will exit. 
 2. `public static void checkInitialization()` 
-   1. Check if .getlet directory is initialized. It should be called before any gitlet operations except init.
+   1. Check if .getlet directory is initialized. It should be called before any gitlet operations in Main except the init().
    2. Print a warning if CWD doesn't have `gitlet`system initialized.
-3. `public static String saveObjectToSHA1Name(File destFolder, Serializable ob)`
-   1. Save the Serializable object to the destination folder.
+3. `public static String saveCommitToSHA1Name(File destFolder, Commit c)`
+   1. Save the Commit object to a file in the destination folder.
    2. Get the SHA1 hash of the file, and change the file name to the SHA1 hash.
    3. Return the SHA1 hash.
 4. `public static String copyFileToSHA1Name(File destFolder, File f)`
    1. Copy the file to the destination folder.
    2. Get the SHA1 hash of the file, and change the file name to the SHA1 hash.
    3. Return the SHA1 hash.
-5. `public static void readStaticVariables()`
+5. `public static String copyFileToSHA1Name(File destFolder, File f)`
+   1. Copy the file to the destination folder.
+   2. Get the SHA1 hash of the file, and change the file name to the SHA1 hash.
+   3. Return the SHA1 hash.
+6. `public static void readStaticVariables()`
    1. Read the static variables from their corresponding files.
    2. This is used before any function that requires these variables.
-6. `public static void saveStaticVariableFiles()`
-   1. Write the static variable files contents to the corresponding files.
-7. `public static Commit readCommitFromFile(String commitID)`
+7. `public static void saveStaticVariableFiles()`
+   1. Write the static variable file contents to the corresponding files.
+8. `public static Commit readCommitFromFile(String commitID)`
    1. Read from the file in COMMITS_DIR to a Commit object.
    2. The file name is commitID in String.
-8. `public static void printVariables()`
+9. `public static void printVariables()`
    1. Helper function for debugging.
-   2. This prints the stabic variables contents.
-9. `public static void add(String file)`
-   1. Used for `java gitlet.Main add [file name]` command.
-   2. Stage a file to be added in the repository. Add the file to blobs folder and put fileName:hash to the addFileMap.
-   3. Update addFilemap
-      1. case 1: If the headCommit blobs is null or the blobs doesn't have this file hash, add this fileName:hash entry to addFileMap.
-      2. case 2: If headCommit blobs (fileName:hash) have this hash. 
-         1. The existing fileBlob doesn't have this fileName, then put the newFileName:hash to teh addFilesMap.
-         2. If the fileName exists in the headCommit fileBlobs.
-            1. If the fileName:hash exists, no need to add. If it is in the addFileMap, remove it.
-            2. If fileName: hash doesn't match, we need to update the hash in the addFileMap.
-   4. Check if the file exists in the rmFileMap, if so remove it there.
-   5. Save the static variables to files.
-10. `public static void rmFile(String file)`
+   2. This prints the static variables' contents.
+10. `public static void add(String file)`
+    1. Used for `java gitlet.Main add [file name]` command.
+    2. Stage a file to be added. Copy the file to `blobs` folder and put fileName:hash to the `addFileMap`.
+    3. Update addFilemap
+       1. If headCommit blobs have this fileName : hash pair. Then no need to stage this file. If this file is already staged, remove it from addFileMap.
+       2. Else, add fileName : hash to addFileMap. This will create or update the fileHash in the map.
+    4. Check if the file exists in the rmFileMap, if so remove it there.
+11. `public static void rmFile(String fileName)`
     1. Used for `java gitlet.Main rm [file name]` command.
     2. Stage a file to be removed from the repository.
     3. If the file name is in the `addFiles`, remove the file in the addFileMap list and remove the corresponding file.
@@ -97,7 +93,7 @@ The main logics reside in the **Repository class**.
     6. Note that a file will not be both in the addFiles and current commit's blobs. See the add and makeCommit functions.
         1. After each commit, addFiles will be cleared.
         2. If the file is in the current commit's blobs, and we add this file again, it will not be staged in the addFiles.
-11. `public static void makeCommit(String message)`
+12. `public static void makeCommit(String message)`
     1. Used for `java gitlet.Main commit [message]` command.
     2. Create a Commit object with the provided message. Save the Commit object to commits folder.
     3. Use the static instance variable `headCommit` create a new Commit object by the copying constructor.
@@ -110,7 +106,7 @@ The main logics reside in the **Repository class**.
        4. Update headID and branch pointer.
     5. Clear staging area.
     6. Save static variables.
-12. `public String showLocalLog()`
+13. `public String showLocalLog()`
     1. Used for `java gitlet.Main log` command.
     2. Print the log history of the headCommit.
     3. Create a new StringBuilder object.
@@ -118,65 +114,65 @@ The main logics reside in the **Repository class**.
     5. From the parent commitID, read its contents and add them to the StringBuilder. If there are multiple parentCommitIDs, use the first one.
     6. Repeat until reaching the initial commit where the parent commitID is null.
     7. Display the whole string content.
-13. `public String showGlobalLog()`
+14. `public String showGlobalLog()`
      1. Used for `java gitlet.Main global-log` command.
      2. Show all commmits in no particular order.
      3. Iterate all the file names in commit folder.
      4. Read the files to Commit object into a string builder object.
-14. `public static void showGlobalLogInOrder()`
+15. `public static void showGlobalLogInOrder()`
     1. Show all commits in the order of timestamp.
     2. Implement the Commit class as Comparable and change the compareTo() based on timestamp.
     3. Use a TreeMap <Commmit, String> of Commit:ID and add all commit information. Then they will be in order.
     4. Iterate the TreeMap, it will return objects in natural order from smallest timestamp to largest timestamp.
-15. `public String findCommitFromMessage(String message)`
+16. `public String findCommitFromMessage(String message)`
     1. Used for `java gitlet.Main find [commit message]` command.
     2. Find all commit IDs having the provided message.
     3. Iterate all the file names in commit folder. Save commit ID where the Commit has the provided message.
-16. `public String showStatus()`
+17. `public String showStatus()`
     1. Used for `java gitlet.Main status` command.
     2. Print the repository information such as branches, staged files etc.
     3. From branchesMap, read all branch names.
     4. From `addFiles` and `rmFiles` read the list of file names to add and remove.
     5. Add modified files but not staged for commit.
     6. Add untracked file names.
-17. `public void checkoutCommitAndFile(String commitID, String fileName)`
+18. `public void checkoutCommitAndFile(String commitID, String fileName)`
     1. Used for `java gitlet.Main checkout [commit id] -- [file name]` command.
     2. Change the file's contents according to its snapshot in the provided commitID.
     3. Use the commitID to read the relevant commit object.
     4. From the commit object, get the file's hash.
     5. Use the hash, get the serialized file from the blobs folder, copy it to the CWD and overwrite the file if it is already there.
-18. `public void checkoutFile(String fileName)`
+19. `public void checkoutFile(String fileName)`
     1. Used for `java gitlet.Main checkout -- [file name]` command.
     2. Change a file's content according to the headCommit.
     3. Call checkoutCommitAndFile(headID, fileName)
-19. `public void checkoutBranch(String branchName)`
+20. `public void checkoutBranch(String branchName)`
     1. Used for `java gitlet.Main checkout [branch name]` command.
     2. Change the CWD contents according to the branch's latest commit.
     3. Use the branch name to get the branch latest commitID from branchesMap.
     4. Call resetCommitFiles to copy files to CWD.
     5. Point the `head` file to this commit. Change the activeBranch to the branchName.
     6. Clear the stagingArea.
-20. `public void createBranch(String branchName)`
+21. `public void createBranch(String branchName)`
     1. Used for `java gitlet.Main branch [branch name]` command.
     2. Create a new branch and point it to the headCommit.
     3. Update the branchesMap, add the branchName : headID
-21. `public void rmBranch(String branchName)`
+22. `public void rmBranch(String branchName)`
     1. Used for `java gitlet.Main rm-branch [branch name]` command.
     2. Remove the provided branch from the repository.
     3. Update the `branches` file, delete the branchName entry.
-22. `public void resetCommit(String preCommitID)`
+23. `public void resetCommit(String preCommitID)`
     1. Used for `java gitlet.Main reset [commit id]` command.
     2. Change CWD contents according to the provided commit id. Update head pointer and branch pointer.
     3. Call helper function resetCommitFiles().
     4. Change the head pointer and branch pointer to preCommitID.
     5. Clear the stagingArea.
-23. `public void resetCommitFiles(String preCommitID)`
+24. `public void resetCommitFiles(String preCommitID)`
     1. Helper function to change CWD contens based on the provided commit id.
     2. Read the commit object with the id of preCommitID.
     3. Check if the commit file exists and if there is any untracked files in CWD.
     4. Delete all files in CWD.
     5. Copy files from the preCommit blobs to CWD.
-24. `public void merge(String branch)`
+25. `public void merge(String branch)`
     1. Used for `java gitlet.Main merge [branch name]` command.
     2. Merges files from the given branch into the current branch.
     3. Create a new Commit object by copying the head from the current branch. Use it as the baseline and modify it. 
@@ -224,14 +220,14 @@ The main logics reside in the **Repository class**.
                  1. If in the current branch, those files are the same as the ancestor, stage them for add.
                  2. If in the current branch, those files are the different from the ancestor, and different from the current branch, call handleConflict helper function.
        6. At the end, make a new commit
-25. `public Commit findLatestCommonAncestor(String branch1, String branch2)`
+26. `public Commit findLatestCommonAncestor(String branch1, String branch2)`
     1. Helper function for merge
     2. Find the latest common ancestor for two branches
        1. use two pointers, switch position when reaching the end.
        2. when they are equal, we found the ancestor.
-26. `public void handleConflict(String file1, String file2) `
+27. `public void handleConflict(String file1, String file2) `
     1. Helper function to handle merge conflicts
-27. `public Set<String> toSet(Commit c)` 
+28. `public Set<String> toSet(Commit c)` 
     1. Helper function to put the file names in the commit to a set
 
 These functions can be replaced with the standard set operations, since we can convert the commit file list to a set.

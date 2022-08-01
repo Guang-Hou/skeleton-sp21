@@ -56,6 +56,8 @@ public class Repository {
 
     /* The head Commit object. This variable is not stored as file. */
     private static Commit headCommit;
+    /* The head Commit object's blobs. This variable is not stored as file. */
+    private static HashMap<String, String> headCommitBlobs = new HashMap<>();
 
     /**
      * Create the necessary directories and make the initial commit.
@@ -70,8 +72,8 @@ public class Repository {
         COMMITS_DIR.mkdir();
         BLOBS_DIR.mkdir();
 
-        Commit initial = new Commit();
-        String hash = saveCommitToSHA1Name(COMMITS_DIR, initial);
+        Commit initialCommit = new Commit();
+        String hash = saveCommitToSHA1Name(COMMITS_DIR, initialCommit);
 
         branchesMap.put("master", hash);
         activeBranchName = "master";
@@ -92,7 +94,7 @@ public class Repository {
     }
 
     /**
-     * Save the Serializable object to the destination folder.
+     * Save the Commit object to a file in the destination folder.
      * Get the SHA1 hash of the file, and change the file name to the SHA1 hash.
      * Return the SHA1 hash.
      *
@@ -147,6 +149,7 @@ public class Repository {
         headCommit = readCommitFromFile(headID);
         addFileMap = readObject(addFile, HashMap.class);
         rmFileMap = readObject(rmFile, HashMap.class);
+        headCommitBlobs = headCommit.getBlobs();
     }
 
     /**
@@ -201,32 +204,17 @@ public class Repository {
             System.exit(0);
         }
 
-        // this will not copy the file if the fileBlob with the same hash name already exits.
+        // This will not copy the file if the fileBlob with the same hash name already exits.
         String hash = copyFileToSHA1Name(BLOBS_DIR, f);
 
         readStaticVariables();
-        Map<String, String> headCommitBlobs = headCommit.getBlobs();
-
-        // Update addFileMap
-        // case 1: If the headCommit blobs is null or the blobs doesn't have this file hash,
-        // add this fileName:hash entry to addFileMap.
-        if (headCommitBlobs == null || !headCommitBlobs.containsValue(hash)) {
-            addFileMap.put(fileName, hash);
-        } else { // case 2: If headCommit blobs (fileName:hash) have this hash.
-            // The existing fileBlob doesn't have this fileName
-            if (!headCommitBlobs.containsKey(fileName)) {
-                addFileMap.put(fileName, hash);
-            } else { // The fileBlob already exists.
-                // If the fileName:hash exists, no need to add.
-                // If it is in the addFilesmap, remove it.
-                if (headCommitBlobs.get(fileName).equals(hash)) {
-                    if (addFileMap.containsKey(fileName)) {
-                        addFileMap.remove(fileName);
-                    }
-                } else { // If hash doesn't match, we need to update.
-                    addFileMap.put(fileName, hash);
-                }
+        if (headCommitBlobs != null && headCommitBlobs.containsKey(fileName)
+                && headCommitBlobs.containsValue(hash)) {
+            if (addFileMap.containsKey(fileName)) {
+                addFileMap.remove(fileName);
             }
+        } else {
+            addFileMap.put(fileName, hash);
         }
 
         // Update rmFilesMap
@@ -244,7 +232,6 @@ public class Repository {
      */
     public static void rmFile(String fileName) {
         readStaticVariables();
-        HashMap<String, String> headCommitBlobs = headCommit.getBlobs();
 
         if (addFileMap != null && addFileMap.containsKey(fileName)) {
             addFileMap.remove(fileName);
@@ -294,7 +281,7 @@ public class Repository {
         newCommit.setMessage(message);
 
         // Update fileBlobs of the Commit instance variable.
-        HashMap<String, String> oldFileBlobs = headCommit.getBlobs();
+        HashMap<String, String> oldFileBlobs = headCommitBlobs;
         HashMap<String, String> newFileBlobs = new HashMap<>();
         if (oldFileBlobs != null) {
             newFileBlobs = new HashMap<>(oldFileBlobs);
@@ -461,12 +448,11 @@ public class Repository {
 
         // Add untracked file names.
         output.append("=== Untracked Files ===\n");
-        HashMap<String, String> fileBlobs = headCommit.getBlobs();
         List<String> fileNames = plainFilenamesIn(CWD);
         for (String fileName : fileNames) {
             File f = join(CWD, fileName);
             if (f.exists() && !addFileMap.containsKey(fileName)
-                    && (fileBlobs == null || !fileBlobs.containsKey(fileName))) {
+                    && (headCommitBlobs == null || !headCommitBlobs.containsKey(fileName))) {
                 output.append(fileName).append("\n");
             }
         }
@@ -477,20 +463,20 @@ public class Repository {
     /**
      * Get file names in a TreeSet if they are modified,
      * but not tracked.
+     *
      * @return The TreeSet of the filtered file names.
      */
     public static TreeMap<String, String> getModifiedButNotTrackedFiles() {
         readStaticVariables();
         TreeMap<String, String> modifiedButNotTrackedFiles = new TreeMap();
         // Files that were committed before and now are changed but not staged in addFileMap.
-        HashMap<String, String> fileBlobs = headCommit.getBlobs();
-        if (fileBlobs != null) {
-            for (String fileName : fileBlobs.keySet()) {
+        if (headCommitBlobs != null) {
+            for (String fileName : headCommitBlobs.keySet()) {
                 File f = join(CWD, fileName);
                 if (f.exists()) {
                     String currentContent = readContentsAsString(f);
                     String currentContentHash = sha1(currentContent);
-                    String commitContentHash = fileBlobs.get(fileName);
+                    String commitContentHash = headCommitBlobs.get(fileName);
                     if (!addFileMap.containsKey(fileName)
                             && !currentContentHash.equals(commitContentHash)) {
                         modifiedButNotTrackedFiles.put(fileName, "modified");
@@ -511,8 +497,8 @@ public class Repository {
         }
         // Files that were deleted from CWD, still tracked in current commit
         // but they are not in rmFileMap
-        if (fileBlobs != null) {
-            for (String fileName : fileBlobs.keySet()) {
+        if (headCommitBlobs != null) {
+            for (String fileName : headCommitBlobs.keySet()) {
                 File f = join(CWD, fileName);
                 if (!f.exists() && !rmFileMap.containsKey(fileName)) {
                     modifiedButNotTrackedFiles.put(fileName, "deleted");
@@ -673,7 +659,7 @@ public class Repository {
 
         handleUntrackedFileOverwritten(headID, preCommitID);
 
-        HashMap<String, String> curCommitBlobs = headCommit.getBlobs();
+        HashMap<String, String> curCommitBlobs = headCommitBlobs;
         HashMap<String, String> preCommitBlobs = preCommit.getBlobs();
 
         // Delete files in CWD that are already committed in the head commit
