@@ -458,7 +458,7 @@ public class Repository {
         HashMap<String, String> fileBlobs = headCommit.getBlobs();
         List<String> fileNames = plainFilenamesIn(CWD);
         for (String fileName : fileNames) {
-            if (!addFileMap.containsKey(fileName) && !fileBlobs.containsKey(fileName)) {
+            if (!addFileMap.containsKey(fileName) && (fileBlobs == null || !fileBlobs.containsKey(fileName))) {
                 output.append(fileName).append("\n");
             }
         }
@@ -478,12 +478,15 @@ public class Repository {
         HashMap<String, String> fileBlobs = headCommit.getBlobs();
         if (fileBlobs != null) {
             for (String fileName : fileBlobs.keySet()) {
-                String currentContent = readContentsAsString(join(CWD, fileName));
-                String currentContentHash = sha1(currentContent);
-                String commitContentHash = fileBlobs.get(fileName);
-                if (!addFileMap.containsKey(fileName)
-                        && !currentContentHash.equals(commitContentHash)) {
-                    modifiedButNotTrackedFiles.add(fileName);
+                File f = join(CWD, fileName);
+                if (f.exists()) {
+                    String currentContent = readContentsAsString(f);
+                    String currentContentHash = sha1(currentContent);
+                    String commitContentHash = fileBlobs.get(fileName);
+                    if (!addFileMap.containsKey(fileName)
+                            && !currentContentHash.equals(commitContentHash)) {
+                        modifiedButNotTrackedFiles.add(fileName);
+                    }
                 }
             }
         }
