@@ -458,11 +458,13 @@ public class Repository {
         HashMap<String, String> fileBlobs = headCommit.getBlobs();
         List<String> fileNames = plainFilenamesIn(CWD);
         for (String fileName : fileNames) {
-            if (!addFileMap.containsKey(fileName) && (fileBlobs == null || !fileBlobs.containsKey(fileName))) {
+            File f = join(CWD, fileName);
+            if (f.exists() && !addFileMap.containsKey(fileName)
+                    && (fileBlobs == null || !fileBlobs.containsKey(fileName))) {
                 output.append(fileName).append("\n");
             }
         }
-        output.append("\n");
+        //output.append("\n");
         System.out.println(output);
     }
 
