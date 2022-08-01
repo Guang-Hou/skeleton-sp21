@@ -447,9 +447,15 @@ public class Repository {
 
         // Add modified files but not staged for commit.
         output.append("=== Modifications Not Staged For Commit ===\n");
-        TreeSet<String> modifiedButNotTrackedFiles = getModifiedButNotTrackedFiles();
-        for (String f : modifiedButNotTrackedFiles) {
-            output.append(f + "\n");
+        TreeMap<String, String> modifiedButNotTrackedFiles = getModifiedButNotTrackedFiles();
+        for (Map.Entry<String, String> entry : modifiedButNotTrackedFiles.entrySet()) {
+            String name = entry.getKey();
+            String marker = entry.getValue();
+            if (marker.equals("modified")) {
+                output.append(name + " (modified)\n");
+            } else {
+                output.append(name + " (deleted)\n");
+            }
         }
         output.append("\n");
 
@@ -473,9 +479,9 @@ public class Repository {
      * but not tracked.
      * @return The TreeSet of the filtered file names.
      */
-    public static TreeSet<String> getModifiedButNotTrackedFiles() {
+    public static TreeMap<String, String> getModifiedButNotTrackedFiles() {
         readStaticVariables();
-        TreeSet<String> modifiedButNotTrackedFiles = new TreeSet();
+        TreeMap<String, String> modifiedButNotTrackedFiles = new TreeMap();
         // Files that were committed before and now are changed but not staged in addFileMap.
         HashMap<String, String> fileBlobs = headCommit.getBlobs();
         if (fileBlobs != null) {
@@ -487,7 +493,7 @@ public class Repository {
                     String commitContentHash = fileBlobs.get(fileName);
                     if (!addFileMap.containsKey(fileName)
                             && !currentContentHash.equals(commitContentHash)) {
-                        modifiedButNotTrackedFiles.add(fileName);
+                        modifiedButNotTrackedFiles.put(fileName, "modified");
                     }
                 }
             }
@@ -499,7 +505,7 @@ public class Repository {
                 String currentContentHash = sha1(currentContent);
                 String stagedContentHash = addFileMap.get(fileName);
                 if (!currentContentHash.equals(stagedContentHash)) {
-                    modifiedButNotTrackedFiles.add(fileName);
+                    modifiedButNotTrackedFiles.put(fileName, "modified");
                 }
             }
         }
@@ -508,8 +514,8 @@ public class Repository {
         if (fileBlobs != null) {
             for (String fileName : fileBlobs.keySet()) {
                 File f = join(CWD, fileName);
-                if (!f.exists()) {
-                    modifiedButNotTrackedFiles.add(fileName);
+                if (!f.exists() && !rmFileMap.containsKey(fileName)) {
+                    modifiedButNotTrackedFiles.put(fileName, "deleted");
                 }
             }
         }
