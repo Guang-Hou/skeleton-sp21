@@ -208,8 +208,9 @@ public class Repository {
         String hash = copyFileToSHA1Name(BLOBS_DIR, f);
 
         readStaticVariables();
+
         if (headCommitBlobs != null && headCommitBlobs.containsKey(fileName)
-                && headCommitBlobs.containsValue(hash)) {
+                && headCommitBlobs.get(fileName).equals(hash)) {
             if (addFileMap.containsKey(fileName)) {
                 addFileMap.remove(fileName);
             }
