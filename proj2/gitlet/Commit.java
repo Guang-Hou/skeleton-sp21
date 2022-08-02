@@ -127,7 +127,7 @@ public class Commit implements Serializable, Comparable<Commit> {
      * @param blobs HashMap<fileName, fileHash>.
      */
     public void setBlobs(HashMap<String, String> blobs) {
-        this.blobs = new HashMap<>(blobs);
+        this.blobs = blobs;
     }
 
     /**

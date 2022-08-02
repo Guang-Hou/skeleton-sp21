@@ -128,7 +128,7 @@ public class Repository {
         if (fileNewName.exists()) {
             return hash;
         }
-        // copy the file to the destFolder and rename to it hash.
+        // Copy the file to the destFolder and rename to it hash.
         // This will not replace the file if it exits.
         try {
             Files.copy(f.toPath(), fileNewName.toPath());
@@ -209,10 +209,8 @@ public class Repository {
 
         readStaticVariables();
         if (headCommitBlobs != null && headCommitBlobs.containsKey(fileName)
-                && headCommitBlobs.containsValue(hash)) {
-            if (addFileMap.containsKey(fileName)) {
-                addFileMap.remove(fileName);
-            }
+                && headCommitBlobs.containsValue(hash) && addFileMap.containsKey(fileName)) {
+            addFileMap.remove(fileName);
         } else {
             addFileMap.put(fileName, hash);
         }
@@ -281,10 +279,16 @@ public class Repository {
         newCommit.setMessage(message);
 
         // Update fileBlobs of the Commit instance variable.
-        HashMap<String, String> oldFileBlobs = headCommitBlobs;
         HashMap<String, String> newFileBlobs = new HashMap<>();
-        if (oldFileBlobs != null) {
-            newFileBlobs = new HashMap<>(oldFileBlobs);
+
+        if (headCommitBlobs != null) {
+            for (Map.Entry<String, String> entry : headCommitBlobs.entrySet()) {
+                String fileName = entry.getKey();
+                String fileHash = entry.getValue();
+                if (!rmFileMap.containsKey(fileName)) {
+                    newFileBlobs.put(fileName, fileHash);
+                }
+            }
         }
 
         for (Map.Entry<String, String> entry : addFileMap.entrySet()) {
@@ -293,13 +297,6 @@ public class Repository {
             newFileBlobs.put(fileName, fileHash);
         }
 
-        for (Map.Entry<String, String> entry : rmFileMap.entrySet()) {
-            String fileName = entry.getKey();
-            String fileHash = entry.getValue();
-            if (newFileBlobs.containsKey(fileName)) {
-                newFileBlobs.remove(fileName);
-            }
-        }
         newCommit.setBlobs(newFileBlobs);
 
         // Save commit object to the folder.
@@ -752,6 +749,10 @@ public class Repository {
         // If the givenBranch adds files from ancestor.
         givenBranchAddFiles(ancestorID, givenBranchID, activeBranchID);
 
+//        System.out.println("activeBranchBlobs: " + readCommitFromFile(activeBranchID).getBlobs().toString());
+//        System.out.println("givenBranchBlobs: " + readCommitFromFile(givenBranchID).getBlobs().toString());
+//        System.out.println("ancestorBlobs: " + readCommitFromFile(ancestorID).getBlobs().toString());
+
         // If the givenBranch modifies files from ancestor.
         givenBranchModifiesFiles(ancestorID, givenBranchID, activeBranchID);
 
@@ -877,8 +878,8 @@ public class Repository {
      */
     public static void givenBranchModifiesFiles(
             String ancestorID, String givenBranchID, String activeBranchID) {
-        readStaticVariables();
 
+        readStaticVariables();
         HashMap<String, String> activeBranchBlobs = readCommitFromFile(activeBranchID).getBlobs();
         HashMap<String, String> givenBranchBlobs = readCommitFromFile(givenBranchID).getBlobs();
         HashMap<String, String> ancestorBlobs = readCommitFromFile(ancestorID).getBlobs();
@@ -903,6 +904,9 @@ public class Repository {
             if (givenBranchBlobs != null && ancestorBlobs != null) {
                 String hashInGiven = givenBranchBlobs.get(fileName);
                 String hashInAncestor = ancestorBlobs.get(fileName);
+//                System.out.println("fileName: " + fileName + "\n"
+//                        + "hashInGiven: " + hashInGiven + "\n"
+//                        + "hashInAncestor: " + hashInAncestor + "\n");
                 if (ancestorFiles.contains(fileName) && !hashInGiven.equals(hashInAncestor)) {
                     targetFiles.add(fileName);
                 }
@@ -929,6 +933,14 @@ public class Repository {
             }
         }
 
+//        System.out.println("ancestorID: " + ancestorID);
+//        System.out.println("givenBranchID: " + givenBranchID);
+//        System.out.println("activeBranchID: " + activeBranchID);
+//
+//        System.out.println("ancestorFiles: " + ancestorFiles);
+//        System.out.println("givenBranchFiles: " + givenBranchFiles);
+//        System.out.println("targetFiles: " + targetFiles);
+
         saveStaticVariableFiles();
     }
 
@@ -954,8 +966,8 @@ public class Repository {
     /**
      * Find the latest common ancestor commit of two branches.
      *
-     * @param branch1 The first branch name.
-     * @param branch2 The second branch name.
+     * @param branch1 The first branch name, typically active branch in merge.
+     * @param branch2 The second branch name, typically given branch in merge.
      * @return The string ID of the latest common ancestor commit.
      */
     public static String findLatestCommonAncestor(String branch1, String branch2) {
@@ -986,9 +998,7 @@ public class Repository {
 
         // Trace up from branch2ID to check its parents,
         // the first commitID which exists in branch1Parents is the latest common ancestor
-        // Here we must use BFS to check the closest commits first
-        String pointer1 = branch1ID;
-        String pointer2 = branch2ID;
+        // Here we must use BFS to check the latest parent commit which is also branch1's parent.
 
         Deque<String> bfsQueue2 = new ArrayDeque();
         bfsQueue2.add(branch2ID);
