@@ -77,7 +77,7 @@ The main logics reside in the **Repository class**.
    2. This prints the static variables' contents.
 10. `public static void add(String fileName)`
     1. Used for `java gitlet.Main add [file name]` command.
-    2. Stage a file to be added to the next commit. 
+    2. Conduct file operation here and provide information to the `addFileMap` so later the makeCommit can update the commit's fileBlos information. 
     3. Copy the file to `blobs` folder and update `addFileMap` as below:
        1. If headCommit blobs have this fileName : hash pair. Then no need to stage this file. 
           1. If this file is already staged, remove it from addFileMap.
@@ -85,28 +85,30 @@ The main logics reside in the **Repository class**.
     4. Check if the file exists in the rmFileMap, if so remove it there.
 11. `public static void rmFile(String fileName)`
     1. Used for `java gitlet.Main rm [file name]` command.
-    2. Remove file if needed and stage a file to be removed from the repository for the next commit.
+    2. Remove file if needed and stage a file to be removed for the next commit. Finish the file operation here and update information in the `addFileMap` so the next commit can update the commit fileBlob.
     3. If the file name is in the `addFiles`, remove the file in the addFileMap list and remove the corresponding file.
     4. If the file is in the current commit's blobs, 
-       1. Add the fileName : hash to the `rmFileMap. 
-       2. If the fileDelete the file in CWD, delete it.
+       1. Add the fileName : hash to the `rmFileMap`. 
+       2. If the file exists in CWD, delete it.
     5. If neither is the case, exit and print error message.
     6. Note that a file will not be both in the addFiles and current commit's blobs. See the add and makeCommit functions.
         1. After each commit, addFiles will be cleared.
         2. If the file is in the current commit's blobs, and we add this file again, it will not be staged in the addFiles.
-12. `public static void makeCommit(String message)`
-    1. Used for `java gitlet.Main commit [message]` command.
-    2. Create a Commit object with the provided message. Save the Commit object to commits folder.
-    3. Use the static instance variable `headCommit` create a new Commit object by the copying constructor.
-    4. Update the Commit object instance variables based on the addFileMap and rmFileMap:
-       1. Update message.
-       2. Update fileBlobs.
-          1. For each `file:hash` in the `addFiles`, update it in the `blobs` section of the commit.
-          2. For each `file:hash` in the `rmFiles`, remove it from the `blobs` section of the commit.
-       3. Save the commit object.
-       4. Update headID and branch pointer.
-    5. Clear staging area.
-    6. Save static variables.
+12. `public static void makeCommit(String message, additionalParentID)`
+    1. Used for `java gitlet.Main commit [message]` command and `merge` function.
+    2. Create a Commit object with the provided message. Save the Commit object to `commits` folder.
+    3. For `merge` function, provide the `additionalParentID` to be added to the merged commit.
+    4. Use the static instance variable `headCommit` create a new Commit object by the copying constructor.
+    5. Update the Commit object instance variables based on the addFileMap and rmFileMap:
+       1. No file operation here. Just update the record (pointers).
+       2. Update message.
+       3. Update fileBlobs.
+          1. For each `file:hash` in the `addFiles`, update it in the `blobs` section of the commit. The file copy operation is already done in the `add` function.
+          2. For each `file:hash` in the `rmFiles`, remove it from the `blobs` section of the commit. The file deletion operation (if needed) is already done in the `rm` function call.
+       4. Save the commit object.
+       5. Update headID and branch pointer.
+    6. Clear staging area.
+    7. Save static variables.
 13. `public String showLocalLog()`
     1. Used for `java gitlet.Main log` command.
     2. Print the log history of the headCommit.
@@ -118,13 +120,13 @@ The main logics reside in the **Repository class**.
 14. `public String showGlobalLog()`
      1. Used for `java gitlet.Main global-log` command.
      2. Show all commmits in no particular order.
-     3. Iterate all the file names in commit folder.
-     4. Read the files to Commit object into a string builder object.
+     3. Iterate all the file names in `commits` folder.
+     4. Read the files to Commit object, then its contents into a string joiner object.
 15. `public static void showGlobalLogInOrder()`
     1. Show all commits in the order of timestamp.
     2. Implement the Commit class as Comparable and change the compareTo() based on timestamp.
-    3. Use a TreeMap <Commmit, String> of Commit:ID and add all commit information. Then they will be in order.
-    4. Iterate the TreeMap, it will return objects in natural order from smallest timestamp to largest timestamp.
+    3. Use a TreeMap <Commmit, String> to store Commit:ID information in reverse order.
+    4. Iterate the TreeMap, it will return objects in reversed order from latest timestamp to oldest timestamp.
 16. `public String findCommitFromMessage(String message)`
     1. Used for `java gitlet.Main find [commit message]` command.
     2. Find all commit IDs having the provided message.

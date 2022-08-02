@@ -47,7 +47,8 @@ public class Main {
             case "global-log" -> {
                 Repository.checkInitialization();
                 validateNumArgs(args, 1);
-                Repository.showGlobalLog();
+                //Repository.showGlobalLog();
+                Repository.showGlobalLogInOrder();
             }
             case "find" -> {
                 Repository.checkInitialization();

@@ -209,6 +209,7 @@ public class Repository {
 
         readStaticVariables();
 
+        // Update addFileMap
         if (headCommitBlobs != null && headCommitBlobs.containsKey(fileName)
                 && headCommitBlobs.get(fileName).equals(hash)) {
             if (addFileMap.containsKey(fileName)) {
@@ -218,7 +219,7 @@ public class Repository {
             addFileMap.put(fileName, hash);
         }
 
-        // Update rmFilesMap
+        // Update rmFileMap
         if (rmFileMap.containsKey(fileName)) {
             rmFileMap.remove(fileName);
         }
@@ -247,6 +248,7 @@ public class Repository {
             System.out.println("No reason to remove the file.");
             System.exit(0);
         }
+
         saveStaticVariableFiles();
     }
 
@@ -273,7 +275,7 @@ public class Repository {
             System.exit(0);
         }
 
-        // Add additional parentID.
+        // Add additional parentID. Used for merge function.
         if (additionalParentID != null && additionalParentID.length() > 0) {
             newCommit.addParentID(additionalParentID);
         }
@@ -360,18 +362,18 @@ public class Repository {
      * Show all commits in the order of timestamp.
      */
     public static void showGlobalLogInOrder() {
-        Map<Commit, String> commitMap = new TreeMap<>();
+        Map<Commit, String> commitMap = new TreeMap<>(Collections.reverseOrder());
         List<String> commitIDs = plainFilenamesIn(COMMITS_DIR);
         for (String commitID : commitIDs) {
             Commit c = readCommitFromFile(commitID);
             commitMap.put(c, commitID);
         }
 
-        StringBuilder s = new StringBuilder();
+        StringJoiner s = new StringJoiner("\n");
         for (Map.Entry<Commit, String> entry : commitMap.entrySet()) {
             Commit c = entry.getKey();
             String id = entry.getValue();
-            s.append(c.toString(id));
+            s.add(c.toString(id));
         }
 
         System.out.println(s);
