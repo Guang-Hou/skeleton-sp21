@@ -364,6 +364,7 @@ public class Repository {
     public static void showGlobalLogInOrder() {
         Map<Commit, String> commitMap = new TreeMap<>(Collections.reverseOrder());
         List<String> commitIDs = plainFilenamesIn(COMMITS_DIR);
+
         for (String commitID : commitIDs) {
             Commit c = readCommitFromFile(commitID);
             commitMap.put(c, commitID);
@@ -388,16 +389,19 @@ public class Repository {
     public static void findCommitFromMessage(String message) {
         StringBuilder relatedCommits = new StringBuilder();
         List<String> commitIDs = plainFilenamesIn(COMMITS_DIR);
+
         for (String commitID : commitIDs) {
             Commit c = readCommitFromFile(commitID);
             if (c.getMessage().equals(message)) {
                 relatedCommits.append(commitID).append("\n");
             }
         }
+
         if (relatedCommits == null || relatedCommits.length() == 0) {
             System.out.println("Found no commit with that message.");
             System.exit(0);
         }
+
         System.out.println(relatedCommits);
     }
 
@@ -471,7 +475,7 @@ public class Repository {
     public static TreeMap<String, String> getModifiedButNotTrackedFiles() {
         readStaticVariables();
         TreeMap<String, String> modifiedButNotTrackedFiles = new TreeMap();
-        // Files that were committed before and now are changed but not staged in addFileMap.
+        // Files that were committed before which now are changed but not staged in addFileMap.
         if (headCommitBlobs != null) {
             for (String fileName : headCommitBlobs.keySet()) {
                 File f = join(CWD, fileName);
@@ -486,7 +490,7 @@ public class Repository {
                 }
             }
         }
-        // Files that were staged before and now are changed after being staged.
+        // Files that were staged before which now are changed after being staged.
         if (!addFileMap.isEmpty()) {
             for (String fileName : addFileMap.keySet()) {
                 String currentContent = readContentsAsString(join(CWD, fileName));
@@ -516,7 +520,7 @@ public class Repository {
      * @param commitID The specific Commit's hash id.
      * @param fileName The file name in CWD.
      */
-    public static void checkoutCommitAndFile(String commitID, String fileName) {
+    public static void checkoutCommitSpecificFile(String commitID, String fileName) {
         List<String> commitFileNames = plainFilenamesIn(COMMITS_DIR);
 
         String targetCommitID = null;
@@ -551,7 +555,7 @@ public class Repository {
      */
     public static void checkoutFile(String fileName) {
         readStaticVariables();
-        checkoutCommitAndFile(headID, fileName);
+        checkoutCommitSpecificFile(headID, fileName);
     }
 
     /**

@@ -72,7 +72,7 @@ public class Main {
                 } else if (args.length == 4 && args[2].equals("--")) {
                     String commitID = args[1];
                     String fileName = args[3];
-                    Repository.checkoutCommitAndFile(commitID, fileName);
+                    Repository.checkoutCommitSpecificFile(commitID, fileName);
                 } else {
                     System.out.println("Incorrect operands.");
                 }

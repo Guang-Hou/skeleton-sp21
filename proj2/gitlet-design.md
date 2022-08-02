@@ -134,48 +134,57 @@ The main logics reside in the **Repository class**.
 17. `public String showStatus()`
     1. Used for `java gitlet.Main status` command.
     2. Print the repository information such as branches, staged files etc.
-    3. From branchesMap, read all branch names.
-    4. From `addFiles` and `rmFiles` read the list of file names to add and remove.
+    3. From `branchesMap`, put all branch names in a TreeSet so they will be in lexicographic order.
+    4. From `addFileMap` and `rmFileMap` read the list of file names to TreeSet.
     5. Add modified files but not staged for commit.
-    6. Add untracked file names.
-18. `public void checkoutCommitAndFile(String commitID, String fileName)`
+    6. Add untracked file names which is neither in `addFileMap` nor in the headCommit fileBlobs.
+18. `public static TreeMap<String, String> getModifiedButNotTrackedFiles()`
+    1. Helper function for showStatus() to get the modified but not tracked files.
+    2. Use a TreeMap to keep ordering and a String maker to differentiate between modified and deleted.
+    3. Find files that were committed before which now are changed but not staged in addFileMap.
+    4. Find files that were staged before which now are changed after being staged.
+    5. Find files that were deleted from CWD, still tracked in current commit but they are not in rmFileMap.
+19. `public void checkoutCommitSpecificFile(String commitID, String fileName)`
     1. Used for `java gitlet.Main checkout [commit id] -- [file name]` command.
     2. Change the file's contents according to its snapshot in the provided commitID.
     3. Use the commitID to read the relevant commit object.
     4. From the commit object, get the file's hash.
     5. Use the hash, get the serialized file from the blobs folder, copy it to the CWD and overwrite the file if it is already there.
-19. `public void checkoutFile(String fileName)`
+20. `public void checkoutFile(String fileName)`
     1. Used for `java gitlet.Main checkout -- [file name]` command.
     2. Change a file's content according to the headCommit.
-    3. Call checkoutCommitAndFile(headID, fileName)
-20. `public void checkoutBranch(String branchName)`
+    3. Call checkoutCommitSpecificFile(headID, fileName)
+21. `public void checkoutBranch(String branchName)`
     1. Used for `java gitlet.Main checkout [branch name]` command.
     2. Change the CWD contents according to the branch's latest commit.
-    3. Use the branch name to get the branch latest commitID from branchesMap.
-    4. Call resetCommitFiles to copy files to CWD.
+    3. Use the branch name to get the branch latest commitID from `branchesMap`.
+    4. Call `resetCommitFiles` to copy files to CWD.
     5. Point the `head` file to this commit. Change the activeBranch to the branchName.
     6. Clear the stagingArea.
-21. `public void createBranch(String branchName)`
+22. `public void createBranch(String branchName)`
     1. Used for `java gitlet.Main branch [branch name]` command.
     2. Create a new branch and point it to the headCommit.
     3. Update the branchesMap, add the branchName : headID
-22. `public void rmBranch(String branchName)`
+23. `public void rmBranch(String branchName)`
     1. Used for `java gitlet.Main rm-branch [branch name]` command.
     2. Remove the provided branch from the repository.
     3. Update the `branches` file, delete the branchName entry.
-23. `public void resetCommit(String preCommitID)`
+24. `public void resetCommit(String preCommitID)`
     1. Used for `java gitlet.Main reset [commit id]` command.
     2. Change CWD contents according to the provided commit id. Update head pointer and branch pointer.
     3. Call helper function resetCommitFiles().
     4. Change the head pointer and branch pointer to preCommitID.
     5. Clear the stagingArea.
-24. `public void resetCommitFiles(String preCommitID)`
-    1. Helper function to change CWD contens based on the provided commit id.
-    2. Read the commit object with the id of preCommitID.
-    3. Check if the commit file exists and if there is any untracked files in CWD.
-    4. Delete all files in CWD.
-    5. Copy files from the preCommit blobs to CWD.
-25. `public void merge(String branch)`
+25. `public void resetCommitFiles(String preCommitID)`
+    1. Helper function to change CWD contents based on the provided commit id.
+    2. Read the commit object with the preCommitID.
+    3. Check if the commit file exists and if there is any untracked files in CWD. Call helper function `handleUntrackedFileOverwritten`.
+    4. Delete files in CWD that are already committed in the head commit. Note not all files will be deleted. For example, an untracked new file which is not in the commit, and if it will not be overwriten by the preCommit, it should not be deleted.
+    5. Copy files from the preCommit blobs to CWD, and overwrite if the fileName already exists. The final status is the all the fileNames in preCommitID are restored. Some new files might exist.
+26. `public static void handleUntrackedFileOverwritten(String curCommitID, String preCommitID)`
+    1. Helper function for resetCommitFiles.
+    2. Handle the case where there is untracked file which will be overwritten by the preCommitID.
+27. `public void merge(String givenBranchName)`
     1. Used for `java gitlet.Main merge [branch name]` command.
     2. Merges files from the given branch into the current branch.
     3. Create a new Commit object by copying the head from the current branch. Use it as the baseline and modify it. 
@@ -223,14 +232,17 @@ The main logics reside in the **Repository class**.
                  1. If in the current branch, those files are the same as the ancestor, stage them for add.
                  2. If in the current branch, those files are the different from the ancestor, and different from the current branch, call handleConflict helper function.
        6. At the end, make a new commit
-26. `public Commit findLatestCommonAncestor(String branch1, String branch2)`
+28. `public static void givenBranchDeletesFiles( String ancestorID, String givenBranchID, String activeBranchID)`
+    1. Helper function for merge. Handle case where the givenBranch deletes file from the ancestor.
+    2. 
+29. `public Commit findLatestCommonAncestor(String branch1, String branch2)`
     1. Helper function for merge
     2. Find the latest common ancestor for two branches
        1. use two pointers, switch position when reaching the end.
        2. when they are equal, we found the ancestor.
-27. `public void handleConflict(String file1, String file2) `
+30. `public void handleConflict(String file1, String file2) `
     1. Helper function to handle merge conflicts
-28. `public Set<String> toSet(Commit c)` 
+31. `public Set<String> toSet(Commit c)` 
     1. Helper function to put the file names in the commit to a set
 
 These functions can be replaced with the standard set operations, since we can convert the commit file list to a set.
