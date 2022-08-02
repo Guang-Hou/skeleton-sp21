@@ -795,16 +795,17 @@ public class Repository {
 
         // Filter deleted files which are still present in activeBranch
         Set<String> deletedFiles = new HashSet<>();
-        for (Map.Entry<String, String> entry : ancestorBlobs.entrySet()) {
-            String fileName = entry.getKey();
-            if (!givenBranchBlobs.containsKey(fileName) && activeBranchBlobs.containsKey(fileName)) {
-                deletedFiles.add(fileName);
+        if (ancestorBlobs != null) {
+            for (Map.Entry<String, String> entry : ancestorBlobs.entrySet()) {
+                String fileName = entry.getKey();
+                if (!givenBranchBlobs.containsKey(fileName)
+                        && activeBranchBlobs.containsKey(fileName)) {
+                    deletedFiles.add(fileName);
+                }
             }
         }
 
-        // If the activeBranch did not modify the file, then remove it from repository,
-        // and stage it in rmFileMap to be reflected in the next commit.
-        // If it modified the file, then defer to the handle conflict function.
+        // Compare the deltedFile with its status in activeBranch.
         for (String fileName : deletedFiles) {
             if (activeBranchBlobs.get(fileName).
                     equals(ancestorBlobs.get(fileName))) {
@@ -819,7 +820,7 @@ public class Repository {
 
 
     /**
-     * Handle scenario when givenBrandh add new files to ancestor.
+     * Handle scenario where the givenBrandh adds new files to ancestor.
      *
      * @param ancestorID     The ancestor commit id.
      * @param givenBranchID  The given branch head commit id.
@@ -833,25 +834,21 @@ public class Repository {
         HashMap<String, String> givenBranchBlobs = readCommitFromFile(givenBranchID).getBlobs();
         HashMap<String, String> ancestorBlobs = readCommitFromFile(ancestorID).getBlobs();
 
-        // Put file names in set for later operation
-        HashSet<String> activeBranchFiles = new HashSet<>();
-        HashSet<String> givenBranchFiles = new HashSet<>();
-        HashSet<String> ancestorFiles = new HashSet<>();
-
-        if (activeBranchBlobs != null) {
-            activeBranchFiles = new HashSet<>(activeBranchBlobs.keySet());
-        }
+        // Filter new files in the givenBranch
+        Set<String> newFiles = new HashSet<>();
         if (givenBranchBlobs != null) {
-            givenBranchFiles = new HashSet<>(givenBranchBlobs.keySet());
-        }
-        if (ancestorBlobs != null) {
-            ancestorFiles = new HashSet<>(ancestorBlobs.keySet());
+            for (Map.Entry<String, String> entry : givenBranchBlobs.entrySet()) {
+                String fileName = entry.getKey();
+                if (ancestorBlobs != null && !ancestorBlobs.containsKey(fileName)) {
+                    newFiles.add(fileName);
+                }
+            }
         }
 
-        Set<String> newFiles = new HashSet<>(givenBranchFiles);
-        newFiles.removeAll(ancestorFiles);
+
+        // Compare activeBranch version and givenBranch version.
         for (String fileName : newFiles) {
-            if (!activeBranchFiles.contains(fileName)) {
+            if (activeBranchBlobs != null && !activeBranchBlobs.containsKey(fileName)) {
                 String hashID = givenBranchBlobs.get(fileName);
                 addFileMap.put(fileName, hashID);
                 copyFromBlobToCWD(fileName, hashID);

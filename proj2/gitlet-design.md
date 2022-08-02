@@ -225,9 +225,9 @@ The main logics reside in the **Repository class**.
        2. If not, call handleConflict function.
 29. `givenBranchAddFiles(String ancestorID, String givenBranchID, String activeBranchID)`
     1. Helper function for merge, it handles scenario when givenBrandh add new files to ancestor.
-    2. find the files in the given branch but not in the ancestor
-        2. filter the files that are not present in the current branch, they should be staged for add
-        3. filter the files that are present in the current branch, and if they have different hash code between given branch and current branch, call handleConflict helper function.
+    2. Filter the files in the given branch but not in the ancestor.
+       1. If a file is not present in the current branch, they should be staged in addFileMap and copy to CWD.
+       2. If a file is present in the current branch, and if it has different hash code than given branch, call handleConflict helper function.
 30. `givenBranchModifiesFiles(String ancestorID, String givenBranchID, String activeBranchID)`
     1. Helper function for merge, it handles where givenBranch modifies files in ancestor.
     2.  find files that are both in given branch and ancestor but they have different hash
