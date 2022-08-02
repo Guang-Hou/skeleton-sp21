@@ -75,16 +75,17 @@ The main logics reside in the **Repository class**.
 9. `public static void printVariables()`
    1. Helper function for debugging.
    2. This prints the static variables' contents.
-10. `public static void add(String file)`
+10. `public static void add(String fileName)`
     1. Used for `java gitlet.Main add [file name]` command.
-    2. Stage a file to be added. Copy the file to `blobs` folder and put fileName:hash to the `addFileMap`.
-    3. Update addFilemap
-       1. If headCommit blobs have this fileName : hash pair. Then no need to stage this file. If this file is already staged, remove it from addFileMap.
+    2. Stage a file to be added to the next commit. 
+    3. Copy the file to `blobs` folder and update `addFileMap` as below:
+       1. If headCommit blobs have this fileName : hash pair. Then no need to stage this file. 
+          1. If this file is already staged, remove it from addFileMap.
        2. Else, add fileName : hash to addFileMap. This will create or update the fileHash in the map.
     4. Check if the file exists in the rmFileMap, if so remove it there.
 11. `public static void rmFile(String fileName)`
     1. Used for `java gitlet.Main rm [file name]` command.
-    2. Stage a file to be removed from the repository.
+    2. Remove file if needed and stage a file to be removed from the repository for the next commit.
     3. If the file name is in the `addFiles`, remove the file in the addFileMap list and remove the corresponding file.
     4. If the file is in the current commit's blobs, 
        1. Add the fileName : hash to the `rmFileMap. 
