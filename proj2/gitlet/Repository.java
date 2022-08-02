@@ -798,8 +798,8 @@ public class Repository {
         if (ancestorBlobs != null) {
             for (Map.Entry<String, String> entry : ancestorBlobs.entrySet()) {
                 String fileName = entry.getKey();
-                if (!givenBranchBlobs.containsKey(fileName)
-                        && activeBranchBlobs.containsKey(fileName)) {
+                if ((givenBranchBlobs == null || !givenBranchBlobs.containsKey(fileName))
+                        && activeBranchBlobs != null && activeBranchBlobs.containsKey(fileName)) {
                     deletedFiles.add(fileName);
                 }
             }
@@ -839,12 +839,11 @@ public class Repository {
         if (givenBranchBlobs != null) {
             for (Map.Entry<String, String> entry : givenBranchBlobs.entrySet()) {
                 String fileName = entry.getKey();
-                if (ancestorBlobs != null && !ancestorBlobs.containsKey(fileName)) {
+                if (ancestorBlobs == null || !ancestorBlobs.containsKey(fileName)) {
                     newFiles.add(fileName);
                 }
             }
         }
-
 
         // Compare activeBranch version and givenBranch version.
         for (String fileName : newFiles) {
@@ -879,34 +878,21 @@ public class Repository {
         HashMap<String, String> givenBranchBlobs = readCommitFromFile(givenBranchID).getBlobs();
         HashMap<String, String> ancestorBlobs = readCommitFromFile(ancestorID).getBlobs();
 
-        // Put file names in set for later operation
-        HashSet<String> activeBranchFiles = new HashSet<>();
-        HashSet<String> givenBranchFiles = new HashSet<>();
-        HashSet<String> ancestorFiles = new HashSet<>();
-
-        if (activeBranchBlobs != null) {
-            activeBranchFiles = new HashSet<>(activeBranchBlobs.keySet());
-        }
-        if (givenBranchBlobs != null) {
-            givenBranchFiles = new HashSet<>(givenBranchBlobs.keySet());
-        }
-        if (ancestorBlobs != null) {
-            ancestorFiles = new HashSet<>(ancestorBlobs.keySet());
-        }
-
+        // Filter files present in both givenBranch and ancestor
+        // but have different hashes
         Set<String> targetFiles = new HashSet<>();
-        for (String fileName : givenBranchFiles) {
-            if (givenBranchBlobs != null && ancestorBlobs != null) {
+        if (givenBranchBlobs != null && ancestorBlobs != null) {
+            for (String fileName : givenBranchBlobs.keySet()) {
                 String hashInGiven = givenBranchBlobs.get(fileName);
                 String hashInAncestor = ancestorBlobs.get(fileName);
-                if (ancestorFiles.contains(fileName) && !hashInGiven.equals(hashInAncestor)) {
+                if (ancestorBlobs.containsKey(fileName) && !hashInGiven.equals(hashInAncestor)) {
                     targetFiles.add(fileName);
                 }
             }
         }
 
         for (String fileName : targetFiles) {
-            if (!activeBranchFiles.contains(fileName)) {
+            if (activeBranchBlobs != null && !activeBranchBlobs.containsKey(fileName)) {
                 String hashID = givenBranchBlobs.get(fileName);
                 copyFromBlobToCWD(fileName, hashID);
                 addFileMap.put(fileName, hashID);
@@ -924,14 +910,6 @@ public class Repository {
                 }
             }
         }
-
-//        System.out.println("ancestorID: " + ancestorID);
-//        System.out.println("givenBranchID: " + givenBranchID);
-//        System.out.println("activeBranchID: " + activeBranchID);
-//
-//        System.out.println("ancestorFiles: " + ancestorFiles);
-//        System.out.println("givenBranchFiles: " + givenBranchFiles);
-//        System.out.println("targetFiles: " + targetFiles);
 
         saveStaticVariableFiles();
     }
