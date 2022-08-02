@@ -209,8 +209,10 @@ public class Repository {
 
         readStaticVariables();
         if (headCommitBlobs != null && headCommitBlobs.containsKey(fileName)
-                && headCommitBlobs.containsValue(hash) && addFileMap.containsKey(fileName)) {
-            addFileMap.remove(fileName);
+                && headCommitBlobs.containsValue(hash)) {
+            if (addFileMap.containsKey(fileName)) {
+                addFileMap.remove(fileName);
+            }
         } else {
             addFileMap.put(fileName, hash);
         }
@@ -749,10 +751,6 @@ public class Repository {
         // If the givenBranch adds files from ancestor.
         givenBranchAddFiles(ancestorID, givenBranchID, activeBranchID);
 
-//        System.out.println("activeBranchBlobs: " + readCommitFromFile(activeBranchID).getBlobs().toString());
-//        System.out.println("givenBranchBlobs: " + readCommitFromFile(givenBranchID).getBlobs().toString());
-//        System.out.println("ancestorBlobs: " + readCommitFromFile(ancestorID).getBlobs().toString());
-
         // If the givenBranch modifies files from ancestor.
         givenBranchModifiesFiles(ancestorID, givenBranchID, activeBranchID);
 
@@ -904,9 +902,6 @@ public class Repository {
             if (givenBranchBlobs != null && ancestorBlobs != null) {
                 String hashInGiven = givenBranchBlobs.get(fileName);
                 String hashInAncestor = ancestorBlobs.get(fileName);
-//                System.out.println("fileName: " + fileName + "\n"
-//                        + "hashInGiven: " + hashInGiven + "\n"
-//                        + "hashInAncestor: " + hashInAncestor + "\n");
                 if (ancestorFiles.contains(fileName) && !hashInGiven.equals(hashInAncestor)) {
                     targetFiles.add(fileName);
                 }
