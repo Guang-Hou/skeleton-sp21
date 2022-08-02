@@ -891,6 +891,7 @@ public class Repository {
             }
         }
 
+        // Compare file version between three places.
         for (String fileName : targetFiles) {
             if (activeBranchBlobs != null && !activeBranchBlobs.containsKey(fileName)) {
                 String hashID = givenBranchBlobs.get(fileName);
@@ -916,7 +917,7 @@ public class Repository {
 
 
     /**
-     * Copy the file in BLOBS_DIR folder which has name of fileHash,
+     * Copy the file in BLOBS_DIR folder which has name of given fileHash,
      * to the CWD folder to have the name of fileName.
      * If the fileName already exist, it will be overwritten.
      *
@@ -926,6 +927,7 @@ public class Repository {
     public static void copyFromBlobToCWD(String fileName, String fileHash) {
         File target = join(CWD, fileName);
         File source = join(BLOBS_DIR, fileHash);
+        
         try {
             Files.copy(source.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {

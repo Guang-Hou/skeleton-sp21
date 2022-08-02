@@ -230,31 +230,25 @@ The main logics reside in the **Repository class**.
        2. If a file is present in the current branch, and if it has different hash code than given branch, call handleConflict helper function.
 30. `givenBranchModifiesFiles(String ancestorID, String givenBranchID, String activeBranchID)`
     1. Helper function for merge, it handles where givenBranch modifies files in ancestor.
-    2.  find files that are both in given branch and ancestor but they have different hash
-        2. filter the files that are absent in the current branch, add them (to stagingArea? or copy to CWD?)
-        3. filter the files that are present in the current branch
-            1. if these files in current branch have different hash in the given branch
-                1. If in the current branch, those files are the same as the ancestor, stage them for add.
-                2. If in the current branch, those files are the different from the ancestor, and different from the current branch, call handleConflict helper function.
-31. `public Commit findLatestCommonAncestor(String branch1, String branch2)`
-    1. Helper function for merge
-    2. Find the latest common ancestor for two branches
-       1. use two pointers, switch position when reaching the end.
-       2. when they are equal, we found the ancestor.
-32. `public void handleConflict(String file1, String file2) `
-    1. Helper function to handle merge conflicts
-33. `public Set<String> toSet(Commit c)` 
-    1. Helper function to put the file names in the commit to a set
+    2. Filter files that are both in given branch and ancestor but with different hash.
+    3. If a file is absent in the current branch, add it to addFileMap and copy it to CWD.
+    4. If a file is present in the current branch:
+        1. if the file in current branch have different hash than in the given branch
+            1. If in the current branch, those files are the same as the ancestor, stage the givenBranch version for add.
+            2. If in the current branch, those files are the different from the ancestor, call handleConflict helper function.
+31. `public static void copyFromBlobToCWD(String fileName, String fileHash)`
+    1. Helper function to copy file from blob folder to CWD.
+    2. Copy the file in BLOBS_DIR folder which has the name of given fileHash to the CWD folder to have the name of fileName.
+    3. If the fileName already exist, it will be overwritten.
+32. `public Commit findLatestCommonAncestor(String branch1, String branch2)`
+    1. Helper function for merge to find the latest common ancestor for two branches.
+    2. Use BFS to put branch1's parent ids in a set.
+    3. Use BFS again on branch2 to find the latest/closest common ancestor.
+33. `public static void handleConflict(String fileName, String activeBlobID, String givenBlobID)`
+    1. Helper function to handle merge conflicts.
+    2. Use String builder to combine two versions.
+    3. Write combined content to the file in CWD and stage new hash in addFileMap.
 
-These functions can be replaced with the standard set operations, since we can convert the commit file list to a set.
-22. `public Set<String> commonFiles(Commit c1, Commit c2)`
-    1. Helper function to find the files with the same name in c1 and c2
-23. `public Set<String> commonFiles(Set<String> s1, Commit c2)`
-    1. Helper function to find the files with the same name in s1 and c2
-24. `public Set<String> differentFiles(Commit c1, Commit c2)`
-    1. Helper function to find the files that are in c1 but not c2
-25. `public Set<String> differentFiles(Set<String> s1, Commit c2)`
-    1. Helper function to find the files that are in s1 but not c2
 
 ### Commit Class
 The **Commit class** provides the way to represent Commit information.
@@ -302,6 +296,6 @@ The commits folder stores the serialized commit objects.
 - Each Commit object has the following instance variables:
    1. message
    2. timeStamp
-   3. parentCommit
+   3. parentCommitIDs
    4. List of file name: blob hash code
 - Each Commit object name is the SHA1 hash code of the Commit object.
