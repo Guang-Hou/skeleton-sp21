@@ -793,25 +793,18 @@ public class Repository {
         HashMap<String, String> givenBranchBlobs = readCommitFromFile(givenBranchID).getBlobs();
         HashMap<String, String> ancestorBlobs = readCommitFromFile(ancestorID).getBlobs();
 
-        // Put file names in set for later operation
-        HashSet<String> activeBranchFiles = new HashSet<>();
-        HashSet<String> givenBranchFiles = new HashSet<>();
-        HashSet<String> ancestorFiles = new HashSet<>();
-
-        if (activeBranchBlobs != null) {
-            activeBranchFiles = new HashSet<>(activeBranchBlobs.keySet());
-        }
-        if (givenBranchBlobs != null) {
-            givenBranchFiles = new HashSet<>(givenBranchBlobs.keySet());
-        }
-        if (ancestorBlobs != null) {
-            ancestorFiles = new HashSet<>(ancestorBlobs.keySet());
+        // Filter deleted files which are still present in activeBranch
+        Set<String> deletedFiles = new HashSet<>();
+        for (Map.Entry<String, String> entry : ancestorBlobs.entrySet()) {
+            String fileName = entry.getKey();
+            if (!givenBranchBlobs.containsKey(fileName) && activeBranchBlobs.containsKey(fileName)) {
+                deletedFiles.add(fileName);
+            }
         }
 
-        // If the givenBranch deletes files from ancestor.
-        Set<String> deletedFiles = new HashSet<>(ancestorFiles);
-        deletedFiles.removeAll(givenBranchFiles);
-        deletedFiles.retainAll(activeBranchFiles);
+        // If the activeBranch did not modify the file, then remove it from repository,
+        // and stage it in rmFileMap to be reflected in the next commit.
+        // If it modified the file, then defer to the handle conflict function.
         for (String fileName : deletedFiles) {
             if (activeBranchBlobs.get(fileName).
                     equals(ancestorBlobs.get(fileName))) {
@@ -875,7 +868,7 @@ public class Repository {
     }
 
     /**
-     * Handle scenario when givenBranch modifies files in ancestor.
+     * Handle scenario where givenBranch modifies files in ancestor.
      *
      * @param ancestorID     The ancestor commit id.
      * @param givenBranchID  The given branch head commit id.

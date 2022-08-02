@@ -191,58 +191,59 @@ The main logics reside in the **Repository class**.
     4. We only need to incorporate the given branch's changes of the ancestor to the current branch.
        1. For the files that the given branch just inherits from the ancestor but did not modify. No action is needed. Since we are using the current branch as baseline.
        2. For the changes the given branch brings to the common ancestor
-          1. If the given branch deletes files from the common ancestor
-             1. if these files are absent in the current branch, no action is needed
+          1. If the given branch deletes files from the common ancestor. Call helper function givenBranchDeletesFiles.
+             1. if these files are also absent in the current branch, no action is needed
              2. if these files are present in the current branch, 
-                1. if they are not modified by the current branch, then we need to delete them from the current branch.
+                1. if they are not modified by the current branch, then we need to delete them from the current branch and CWD.
                 2. if they are modified in the current branch, we have a conflict.
-          2. If the given branch added new files to the common ancestor.
+          2. If the given branch added new files to the common ancestor. Call helper function givenBranchAddFiles.
              1. If these files are inside the current branch.
                 1. if they have same hashes, no action is needed.
                 2. if they have different hashes, we have a conflict.
              2. If they are not present in the current branch, we need to add these changes to the current branch.
-          3. If the given branch modified files from the common ancestor.
-             1. If these changed files are absent in the current branch, we want to add them
-             2. If these changed files are present in the current branch
+          3. If the given branch modified files from the common ancestor. Call helper function givenBranchModifiesFiles.
+             1. If these changed files are absent in the current branch, we want to add them.
+             2. If these changed files are present in the current branch.
                 1. If in the current branch, those files are the same as the given branch, no action is needed.
                 2. If in the current branch, those files are the same as the ancestor, we want to keep the changed version from the given branch.
                 3. If in the current branch, those files are the different from the ancestor, and different from the current branch,
                    we have a merge conflict.
-       3. For the common files between the given branch and the current branch, if they both modified the file from the common ancestor, we have a conflict
-           1. if they have different hash, but only one branch modified the common ancestor, we do not have a conflict
     5. Steps
        1. Call helper function to find the split point, the latest common ancestor.
        2. If there are actually no branches in the tree:
-          1. If the split point is the same commit as the given branch, do nothing and return
-          2. If the split point is the current branch, then the effect is to check out the given branch
-       3. Handle case 4.2.1: the given branch deleted files
-          1. Set operation to filter the files in the common ancestor but not in the given branch
-          2. Set operation to filter the files that are present in the current branch
-             1. If the file has the same hash in current branch as the hash in the ancestor, they should be staged for removal. 
-             2. If not, call handleConflict function.
-       4. Handle case 4.2.2: the given branch added new files
-          1. find the files in the given branch but not in the ancestor
-          2. filter the files that are not present in the current branch, they should be staged for add
-          3. filter the files that are present in the current branch, and if they have different hash code between given branch and current branch, call handleConflict helper function.
-       5. Handle case 4.2.3: the given branch modified files from ancestor
-          1. find files that are both in given branch and ancestor but they have different hash 
-          2. filter the files that are absent in the current branch, add them (to stagingArea? or copy to CWD?)
-          3. filter the files that are present in the current branch
-              1. if these files in current branch have different hash in the given branch
-                 1. If in the current branch, those files are the same as the ancestor, stage them for add.
-                 2. If in the current branch, those files are the different from the ancestor, and different from the current branch, call handleConflict helper function.
+          1. If the givenBranch is activeBranch 
+          2. If the split point is the same commit as the given branch, do nothing and return
+          3. If the split point is the current branch, then the effect is to check out the given branch
+       3. Handle case where the given branch deleted files by calling helper function.
+       4. Handle case where the given branch added new files by calling helper function.
+       5. Handle case where the given branch modified files from ancestor by calling helper function.
        6. At the end, make a new commit
 28. `public static void givenBranchDeletesFiles( String ancestorID, String givenBranchID, String activeBranchID)`
     1. Helper function for merge. Handle case where the givenBranch deletes file from the ancestor.
-    2. 
-29. `public Commit findLatestCommonAncestor(String branch1, String branch2)`
+    2. Filter the files in the common ancestor but not in the given branch, and present in the active branch.
+       1. If the file has the same hash in current branch as the hash in the ancestor, they should be staged for removal.
+       2. If not, call handleConflict function.
+29. `givenBranchAddFiles(String ancestorID, String givenBranchID, String activeBranchID)`
+    1. Helper function for merge, it handles scenario when givenBrandh add new files to ancestor.
+    2. find the files in the given branch but not in the ancestor
+        2. filter the files that are not present in the current branch, they should be staged for add
+        3. filter the files that are present in the current branch, and if they have different hash code between given branch and current branch, call handleConflict helper function.
+30. `givenBranchModifiesFiles(String ancestorID, String givenBranchID, String activeBranchID)`
+    1. Helper function for merge, it handles where givenBranch modifies files in ancestor.
+    2.  find files that are both in given branch and ancestor but they have different hash
+        2. filter the files that are absent in the current branch, add them (to stagingArea? or copy to CWD?)
+        3. filter the files that are present in the current branch
+            1. if these files in current branch have different hash in the given branch
+                1. If in the current branch, those files are the same as the ancestor, stage them for add.
+                2. If in the current branch, those files are the different from the ancestor, and different from the current branch, call handleConflict helper function.
+31. `public Commit findLatestCommonAncestor(String branch1, String branch2)`
     1. Helper function for merge
     2. Find the latest common ancestor for two branches
        1. use two pointers, switch position when reaching the end.
        2. when they are equal, we found the ancestor.
-30. `public void handleConflict(String file1, String file2) `
+32. `public void handleConflict(String file1, String file2) `
     1. Helper function to handle merge conflicts
-31. `public Set<String> toSet(Commit c)` 
+33. `public Set<String> toSet(Commit c)` 
     1. Helper function to put the file names in the commit to a set
 
 These functions can be replaced with the standard set operations, since we can convert the commit file list to a set.
