@@ -2,17 +2,17 @@ package bstmap;
 
 import java.util.*;
 
-public class BSTMap<K extends Comparable, V> implements Map61B<K, V> {
+public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
 
     private class BSTNode {
         K key;
         V value;
         BSTNode left, right;
 
-        public BSTNode() {
+        BSTNode() {
         }
 
-        public BSTNode(K k, V v) {
+        BSTNode(K k, V v) {
             key = k;
             value = v;
         }
@@ -20,7 +20,7 @@ public class BSTMap<K extends Comparable, V> implements Map61B<K, V> {
 
     // sentinel node's right child will be the first data node
     private BSTNode sentinel = new BSTNode();
-    int size = 0;
+    private int size = 0;
 
     @Override
     public void clear() {
@@ -33,9 +33,8 @@ public class BSTMap<K extends Comparable, V> implements Map61B<K, V> {
         BSTNode node = findNode(key);
         if (node == null) {
             return false;
-        } else {
-            return true;
         }
+        return true;
     }
 
     /**
@@ -46,7 +45,7 @@ public class BSTMap<K extends Comparable, V> implements Map61B<K, V> {
      * @param key
      * @return
      */
-    public BSTNode findNode(K key) {
+    private BSTNode findNode(K key) {
         BSTNode node = sentinel.right;
         while (node != null) {
             if (node.key.compareTo(key) == 0) {
@@ -69,7 +68,7 @@ public class BSTMap<K extends Comparable, V> implements Map61B<K, V> {
      * @param key
      * @return
      */
-    public BSTNode findParent(K key) {
+    private BSTNode findParent(K key) {
         BSTNode parent = sentinel;
         BSTNode node = sentinel.right;
         while (node != null) {
@@ -114,7 +113,7 @@ public class BSTMap<K extends Comparable, V> implements Map61B<K, V> {
      * @param value
      * @param n
      */
-    public BSTNode put(K key, V value, BSTNode n) {
+    private BSTNode put(K key, V value, BSTNode n) {
         if (n == null) {
             return new BSTNode(key, value);
         }
@@ -140,7 +139,7 @@ public class BSTMap<K extends Comparable, V> implements Map61B<K, V> {
     }
 
     // node has no left or right child
-    public void removeNodeOfNoChild(BSTNode parent, BSTNode node) {
+    private void removeNodeOfNoChild(BSTNode parent, BSTNode node) {
         if (parent.left == node) {
             parent.left = null;
         } else {
@@ -149,7 +148,7 @@ public class BSTMap<K extends Comparable, V> implements Map61B<K, V> {
     }
 
     // node only has left child
-    public void removeNodeOfSingleLeftChild(BSTNode parent, BSTNode node) {
+    private void removeNodeOfSingleLeftChild(BSTNode parent, BSTNode node) {
         if (parent.left == node) {
             parent.left = node.left;
         } else {
@@ -158,7 +157,7 @@ public class BSTMap<K extends Comparable, V> implements Map61B<K, V> {
     }
 
     // node only has right child
-    public void removeNodeOfSingleRightChild(BSTNode parent, BSTNode node) {
+    private void removeNodeOfSingleRightChild(BSTNode parent, BSTNode node) {
         if (parent.left == node) {
             parent.left = node.right;
         } else {
@@ -167,7 +166,7 @@ public class BSTMap<K extends Comparable, V> implements Map61B<K, V> {
     }
 
     // node has both left and right child
-    public void removeNodeOfTwoChild(BSTNode node) {
+    private void removeNodeOfTwoChild(BSTNode node) {
         BSTNode iop = findInorderPredecessor(node);
         BSTNode iopParent = findParent(iop.key);
         node.key = iop.key;
@@ -182,7 +181,7 @@ public class BSTMap<K extends Comparable, V> implements Map61B<K, V> {
 
     // Find the in order traversal predecessor of node
     // assume node has both left and right child nodes
-    public BSTNode findInorderPredecessor(BSTNode node) {
+    private BSTNode findInorderPredecessor(BSTNode node) {
         BSTNode iop = node.left;
         while (iop.right != null) {
             iop = iop.right;
@@ -193,7 +192,9 @@ public class BSTMap<K extends Comparable, V> implements Map61B<K, V> {
     @Override
     public V remove(K key) {
         BSTNode parent = findParent(key);
-        if (parent == null) return null;
+        if (parent == null) {
+            return null;
+        }
 
         BSTNode node = findNode(key);
         V res = node.value;
@@ -214,29 +215,31 @@ public class BSTMap<K extends Comparable, V> implements Map61B<K, V> {
 
 
     /**
-     * Delete the node of target key from tree that is closest to
+     * Delete the node of target key from tree that is closest
      * to the root and return the modified tree. The nodes of
      * the original tree may be modified.
      * https://www-inst.eecs.berkeley.edu//~cs61b/fa14/book2/data-structures.pdf
      */
-    public BSTNode remove(BSTNode tree, K key) {
-        if (tree == null)
+    private BSTNode remove(BSTNode tree, K key) {
+        if (tree == null) {
             return null;
-        if (key.compareTo(tree.key) < 0)
+        }
+        if (key.compareTo(tree.key) < 0) {
             tree.left = remove(tree.left, key);
-        else if (key.compareTo(tree.key) > 0)
+        } else if (key.compareTo(tree.key) > 0) {
             tree.right = remove(tree.right, key);
-        // Otherwise, we’ve found target key node
-        else if (tree.left == null)
+        } else if (tree.left == null) { // Otherwise, we’ve found target key node
             return tree.right;
-        else if (tree.right == null)
+        } else if (tree.right == null) {
             return tree.left;
-        else
+        } else {
             tree.left = swapLargest(tree.left, tree);
+        }
         return tree;
     }
 
-    /** Move the key from the first node in T (in an inorder
+    /**
+     * Move the key from the first node in T (in an inorder
      * traversal) to node R (over-writing the current key of R),
      * remove the first node of T from T, and return the resulting tree.
      */
@@ -255,7 +258,9 @@ public class BSTMap<K extends Comparable, V> implements Map61B<K, V> {
     @Override
     public V remove(K key, V value) {
         BSTNode node = findNode(key);
-        if (node == null) return null;
+        if (node == null) {
+            return null;
+        }
 
         if (node.value == value || node.value.equals(value)) {
             return remove(key);
@@ -278,8 +283,9 @@ public class BSTMap<K extends Comparable, V> implements Map61B<K, V> {
         System.out.println(data);
     }
 
-    // In order traversal, put the keys in a collection (can be list or set, or other collection type class)
-    public void inOrderTraverse(Collection c, BSTNode n) {
+    // In order traversal, put the keys in a collection
+    // (can be list or set, or other collection type class)
+    private void inOrderTraverse(Collection c, BSTNode n) {
         if (n == null) {
             return;
         }
@@ -287,16 +293,6 @@ public class BSTMap<K extends Comparable, V> implements Map61B<K, V> {
         inOrderTraverse(c, n.left);
         c.add(n.key);
         inOrderTraverse(c, n.right);
-    }
-
-    public static void main(String[] args) {
-        BSTMap<String, Integer> test = new BSTMap<>();
-        for (int i = 0; i < 10; i += 1) {
-            test.put("hi" + i, i);
-        }
-        test.printInOrder();
-        test.remove("hi4");
-        test.printInOrder();
     }
 
 }
