@@ -200,7 +200,7 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
      * @return true if the key doesn't exist and this paie is a new element;
      * false if the key already exists and we update its value.
      */
-    public boolean put(K key, V value, Collection<Node>[] hashBuckets) {
+    private boolean put(K key, V value, Collection<Node>[] hashBuckets) {
         Node newEle = createNode(key, value);
         int bucketIndex = Math.floorMod(key.hashCode(), hashBuckets.length);
         Collection<Node> targetBucket = hashBuckets[bucketIndex];
