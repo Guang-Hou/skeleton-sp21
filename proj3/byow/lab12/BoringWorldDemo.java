@@ -32,6 +32,11 @@ public class BoringWorldDemo {
             }
         }
 
+        world[20][2] = Tileset.FLOWER;
+        world[35][2] = Tileset.AVATAR;
+        world[20][4] = Tileset.GRASS;
+        world[35][4] = Tileset.MOUNTAIN;
+
         // draws the world to the screen
         ter.renderFrame(world);
     }
