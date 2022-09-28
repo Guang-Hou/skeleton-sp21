@@ -3,6 +3,7 @@ package byow.Core;
 import byow.TileEngine.TERenderer;
 import byow.TileEngine.TETile;
 import byow.TileEngine.Tileset;
+
 import java.util.Random;
 
 public class Engine {
@@ -14,8 +15,6 @@ public class Engine {
     private static double coverageArea;
     private static final double TARGETAREA = WIDTH * HEIGHT * 0.2;
     private static Random rand;
-
-    enum Direction {NORTH, SOUTH, WEST, EAST, NOWHERE}
 
     /**
      * Method used for exploring a fresh world. This method should handle all inputs,
@@ -73,37 +72,77 @@ public class Engine {
         rand = new Random(seed);
 
         initialize();
-        addFirstRect();
-
+        Rectangular firstRec = getFirstRect();
+        firstRec.draw(world);
         ter.renderFrame(world);
-
-        addRandomRect();
-
+        expandRec(firstRec);
         ter.renderFrame(world);
     }
 
-    public void addFirstRect() {
-        Position p = new Position(rand);
-        //world[p.x][p.y] = Tileset.AVATAR;
-        Rectangular r;
-
-        Direction[] allDirections = Direction.values();
-
-        for (Direction d : allDirections) {
-            r = new Rectangular(p, d, rand);
+    public Rectangular getFirstRect() {
+        while (true) {
+            Rectangular r = new Rectangular(rand);
             if (r.isValid(world)) {
-                r.draw(world);
-                coverageArea += r.getArea();
-                break;
+                return r;
             }
         }
     }
 
-    public void addRandomRect() {
-        Position p = Position.getValidRandomPosition(world, rand);
-        double area = Rectangular.attachRec(world, p, rand);
-        coverageArea += area;
+    /**
+     * Expand from existing rectangular R by creating adjacent rectangulars in R's four edges.
+     * This is done in a recursive way until for any rectangular, the randomly created adjacent rectangular is not valid.
+     *
+     * @param r The staring rectangualr R.
+     */
+    public void expandRec(Rectangular r) {
+        // select a position from one edge, randomly create a rectangular
+        // if the rectangular is valid, recursively call expandRec on this rectangular
+        Position northWallTile = r.getRandTileFromNorthEdge(rand);
+        Rectangular northRec = new Rectangular(northWallTile.shift(-1, 1), Rectangular.CornerType.BOTTOMLEFT, rand);
+        if (northRec.isValid(world)) {
+            northRec.draw(world);
+            makeTunnel(northWallTile, northWallTile.shift(0, 1));
+            expandRec(northRec);
+        }
+
+        Position southWallTile = r.getRandTileFromSouthEdge(rand);
+        Rectangular southRec = new Rectangular(southWallTile.shift(1, -1), Rectangular.CornerType.TOPRIGHT, rand);
+        if (southRec.isValid(world)) {
+            southRec.draw(world);
+            makeTunnel(southWallTile, southWallTile.shift(0, -1));
+            expandRec(southRec);
+        }
+
+        Position westWallTile = r.getRandTileFromWestEdge(rand);
+        Rectangular westRec = new Rectangular(westWallTile.shift(-1, -1), Rectangular.CornerType.BOTTOMRIGHT, rand);
+        if (westRec.isValid(world)) {
+            westRec.draw(world);
+            makeTunnel(westWallTile, westWallTile.shift(-1, 0));
+            expandRec(westRec);
+        }
+
+        Position eastWallTile = r.getRandTileFromEastEdge(rand);
+        Rectangular eastRec = new Rectangular(eastWallTile.shift(1, 1), Rectangular.CornerType.TOPLEFT, rand);
+        if (eastRec.isValid(world)) {
+            eastRec.draw(world);
+            makeTunnel(eastWallTile, eastWallTile.shift(1, 0));
+            expandRec(eastRec);
+        }
+
+        return;
     }
+
+    /**
+     * Make a tunnel between two rectangular by setting their tiles into FLOOR.
+     *
+     * @param p1 Position of the connecting tile in the first rectangular
+     * @param p2 Position of the connecting tile in the other rectangular
+     */
+    public static void makeTunnel(Position p1, Position p2) {
+        world[p1.x][p1.y] = Tileset.FLOOR;
+        world[p2.x][p2.y] = Tileset.FLOOR;
+    }
+
 
     public static void main(String[] args) {
         long seed = 259876;
