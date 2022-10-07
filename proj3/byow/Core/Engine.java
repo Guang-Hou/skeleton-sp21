@@ -1,66 +1,40 @@
 package byow.Core;
 
+import byow.Input.CharInput;
+import byow.Input.keyboardCharInput;
+import byow.Input.stringCharInput;
 import byow.TileEngine.TERenderer;
 import byow.TileEngine.TETile;
 import byow.TileEngine.Tileset;
+import edu.princeton.cs.introcs.StdDraw;
 
+import java.awt.*;
+import java.io.*;
+import java.nio.file.Paths;
 import java.util.Random;
 
 public class Engine {
-    TERenderer ter = new TERenderer();
-    /* Feel free to change the width and height. */
+    private static final File CWD = new File(System.getProperty("user.dir"));
+    private static final File GAMEFOLDER = Paths.get(CWD.getPath(), ".gameData").toFile();
+    private static final File RANDFILE = Paths.get(GAMEFOLDER.getPath(), "rand.txt").toFile();
+    private static final File WORLDFILE = Paths.get(GAMEFOLDER.getPath(), "world.txt").toFile();
+    private static final File playerLocationFILE = Paths.get(GAMEFOLDER.getPath(), "playerLocation.txt").toFile();
+    private TERenderer ter;
     protected static final int WIDTH = 80;
     protected static final int HEIGHT = 30;
-    private static TETile[][] world = new TETile[WIDTH][HEIGHT];
-    private static double coverageArea;
-    private static final double TARGETAREA = WIDTH * HEIGHT * 0.2;
+    private static TETile[][] world;
     private static Random rand;
+    private Point playerLocation;
+    private TETile playerTile = Tileset.MARIO;
 
     /**
-     * Method used for exploring a fresh world. This method should handle all inputs,
-     * including inputs from the main menu.
+     * The constructor initialized the world tile[][] with NOTHING tiles.
      */
-    public void interactWithKeyboard() {
-        buildWorldWithSeed(28476567);
-    }
-
-    /**
-     * Method used for autograding and testing your code. The input string will be a series
-     * of characters (for example, "n123sswwdasdassadwas", "n123sss:q", "lwww". The engine should
-     * behave exactly as if the user typed these characters into the engine using
-     * interactWithKeyboard.
-     * <p>
-     * Recall that strings ending in ":q" should cause the game to quite save. For example,
-     * if we do interactWithInputString("n123sss:q"), we expect the game to run the first
-     * 7 commands (n123sss) and then quit and save. If we then do
-     * interactWithInputString("l"), we should be back in the exact same state.
-     * <p>
-     * In other words, both of these calls:
-     * - interactWithInputString("n123sss:q")
-     * - interactWithInputString("lww")
-     * <p>
-     * should yield the exact same world state as:
-     * - interactWithInputString("n123sssww")
-     *
-     * @param input the input string to feed to your program
-     * @return the 2D TETile[][] representing the state of the world
-     */
-    public TETile[][] interactWithInputString(String input) {
-        // TODO: Fill out this method so that it run the engine using the input
-        // passed in as an argument, and return a 2D tile representation of the
-        // world that would have been drawn if the same inputs had been given
-        // to interactWithKeyboard().
-        //
-        // See proj3.byow.InputDemo for a demo of how you can make a nice clean interface
-        // that works for many different input types.
-
-        TETile[][] finalWorldFrame = null;
-        return finalWorldFrame;
-    }
-
-    public void initialize() {
+    public Engine() {
+        ter = new TERenderer();
         ter.initialize(WIDTH, HEIGHT);
 
+        world = new TETile[WIDTH][HEIGHT];
         for (int x = 0; x < WIDTH; x += 1) {
             for (int y = 0; y < HEIGHT; y += 1) {
                 world[x][y] = Tileset.NOTHING;
@@ -68,86 +42,188 @@ public class Engine {
         }
     }
 
-    public void buildWorldWithSeed(long seed) {
-        rand = new Random(seed);
+    /**
+     * Method used for exploring a fresh world. This method should handle all inputs,
+     * including inputs from the main menu.
+     */
+    public void interactWithKeyboard() {
+        initializeScreen();
+        CharInput keyboardChar = new keyboardCharInput();
+        handleInput(keyboardChar);
+    }
 
-        initialize();
-        Rectangular firstRec = getFirstRect();
-        firstRec.draw(world);
-        ter.renderFrame(world);
-        expandRec(firstRec);
+    /**
+     * Method used for the game to interact with a string input.
+     *
+     * @param input the input string to feed to your program
+     * @return the 2D TETile[][] representing the state of the world
+     */
+    public TETile[][] interactWithInputString(String input) {
+        CharInput charInput = new stringCharInput(input);
+        handleInput(charInput);
+        // ter.renderFrame(world);
+        return world;
+    }
+
+    public void buildWorld() {
+        Rectangular.fillWorldWithRect(world, rand);
+        setupPlayerInitialPoint();
         ter.renderFrame(world);
     }
 
-    public Rectangular getFirstRect() {
+    public void setupPlayerInitialPoint() {
         while (true) {
-            Rectangular r = new Rectangular(rand);
-            if (r.isValid(world)) {
-                return r;
+            Point p = new Point(rand);
+            if (world[p.x][p.y] == Tileset.FLOOR) {
+                world[p.x][p.y] = playerTile;
+                playerLocation = p;
+                return;
             }
         }
     }
 
     /**
-     * Expand from existing rectangular R by creating adjacent rectangulars in R's four edges.
-     * This is done in a recursive way until for any rectangular, the randomly created adjacent rectangular is not valid.
-     *
-     * @param r The staring rectangualr R.
+     * Initialize the screen for keyboard users.
      */
-    public void expandRec(Rectangular r) {
-        // select a position from one edge, randomly create a rectangular
-        // if the rectangular is valid, recursively call expandRec on this rectangular
-        Position northWallTile = r.getRandTileFromNorthEdge(rand);
-        Rectangular northRec = new Rectangular(northWallTile.shift(-1, 1), Rectangular.CornerType.BOTTOMLEFT, rand);
-        if (northRec.isValid(world)) {
-            northRec.draw(world);
-            makeTunnel(northWallTile, northWallTile.shift(0, 1));
-            expandRec(northRec);
-        }
-
-        Position southWallTile = r.getRandTileFromSouthEdge(rand);
-        Rectangular southRec = new Rectangular(southWallTile.shift(1, -1), Rectangular.CornerType.TOPRIGHT, rand);
-        if (southRec.isValid(world)) {
-            southRec.draw(world);
-            makeTunnel(southWallTile, southWallTile.shift(0, -1));
-            expandRec(southRec);
-        }
-
-        Position westWallTile = r.getRandTileFromWestEdge(rand);
-        Rectangular westRec = new Rectangular(westWallTile.shift(-1, -1), Rectangular.CornerType.BOTTOMRIGHT, rand);
-        if (westRec.isValid(world)) {
-            westRec.draw(world);
-            makeTunnel(westWallTile, westWallTile.shift(-1, 0));
-            expandRec(westRec);
-        }
-
-        Position eastWallTile = r.getRandTileFromEastEdge(rand);
-        Rectangular eastRec = new Rectangular(eastWallTile.shift(1, 1), Rectangular.CornerType.TOPLEFT, rand);
-        if (eastRec.isValid(world)) {
-            eastRec.draw(world);
-            makeTunnel(eastWallTile, eastWallTile.shift(1, 0));
-            expandRec(eastRec);
-        }
-
-        return;
+    public void initializeScreen() {
+        StdDraw.clear(Color.black);
+        StdDraw.setPenColor(Color.white);
+        drawContent(WIDTH / 2, HEIGHT * 3 / 4, "CS61B:  THE GAME", 45);
+        drawContent(WIDTH / 2, HEIGHT / 2, "New Game (N)", 30);
+        drawContent(WIDTH / 2, HEIGHT / 2 - 2, "Load Game (L)", 30);
+        drawContent(WIDTH / 2, HEIGHT / 2 - 4, "Quit and save (Q)", 30);
+        StdDraw.show();
     }
 
-    /**
-     * Make a tunnel between two rectangular by setting their tiles into FLOOR.
-     *
-     * @param p1 Position of the connecting tile in the first rectangular
-     * @param p2 Position of the connecting tile in the other rectangular
-     */
-    public static void makeTunnel(Position p1, Position p2) {
-        world[p1.x][p1.y] = Tileset.FLOOR;
-        world[p2.x][p2.y] = Tileset.FLOOR;
+    public void saveWorld() {
+        FileUtils.writeObject(RANDFILE, rand);
+        FileUtils.writeObject(WORLDFILE, world);
+        FileUtils.writeObject(playerLocationFILE, playerLocation);
     }
 
+    public void loadWorld() {
+        rand = FileUtils.readObject(RANDFILE, Random.class);
+        world = FileUtils.readObject(WORLDFILE, TETile[][].class);
+        playerLocation = FileUtils.readObject(playerLocationFILE, Point.class);
+    }
+
+    public void handleMovement(char c) {
+        if (c == 0) {
+            return;
+        }
+        Character direction = Character.toUpperCase(c);
+//        drawContent(10, HEIGHT - 10, "Key: " + c + "Pressed", 20);
+//        StdDraw.show();
+        switch (direction) {
+            case 'W': {
+                Point northTile = playerLocation.shift(0, 1);
+                if (world[northTile.x][northTile.y] == Tileset.FLOOR) {
+                    world[northTile.x][northTile.y] = playerTile;
+                    world[playerLocation.x][playerLocation.y] = Tileset.FLOOR;
+                    playerLocation = northTile;
+                }
+                break;
+            }
+            case 'S': {
+                Point southTile = playerLocation.shift(0, -1);
+                if (world[southTile.x][southTile.y] == Tileset.FLOOR) {
+                    world[southTile.x][southTile.y] = playerTile;
+                    world[playerLocation.x][playerLocation.y] = Tileset.FLOOR;
+                    playerLocation = southTile;
+                }
+                break;
+            }
+            case 'A': {
+                Point westTile = playerLocation.shift(-1, 0);
+                if (world[westTile.x][westTile.y] == Tileset.FLOOR) {
+                    world[westTile.x][westTile.y] = playerTile;
+                    world[playerLocation.x][playerLocation.y] = Tileset.FLOOR;
+                    playerLocation = westTile;
+                }
+                break;
+            }
+            case 'D': {
+                Point eastTile = playerLocation.shift(1, 0);
+                if (world[eastTile.x][eastTile.y] == Tileset.FLOOR) {
+                    world[eastTile.x][eastTile.y] = playerTile;
+                    world[playerLocation.x][playerLocation.y] = Tileset.FLOOR;
+                    playerLocation = eastTile;
+                }
+                break;
+            }
+        }
+        ter.renderFrame(world);
+    }
+
+    public void handleInput(CharInput input) {
+        while (input.hasNextChar()) {
+            Character c = Character.toUpperCase(input.getNextChar());
+            if (c == 'L') {
+                loadWorld();
+            } else if (c == 'N') {
+                getSeed(input);
+                buildWorld();
+            } else if (c == ':' && (!input.hasNextChar() || Character.toUpperCase(input.getNextChar()) == 'Q')) {
+                saveWorld();
+                break;
+            } else {
+                handleMovement(c);
+            }
+        }
+    }
+
+
+    public void getSeed(CharInput input) {
+        if (input instanceof keyboardCharInput) {
+            askUserSeed();
+        }
+        String strSeed = "";
+        Character digit = 0;
+        while (input.hasNextChar()) {
+            digit = input.getNextChar();
+            if (Character.toUpperCase(digit) == 'S') {  // 'S' is the indicator for the end of the seed numbers
+                break;
+            } else if (Character.isDigit(digit)) {
+                strSeed += digit;
+                if (input instanceof keyboardCharInput) {
+                    drawUserSeed(strSeed);
+                }
+            } else {
+                continue;
+            }
+        }
+        long seed = Long.parseLong(strSeed);
+        rand = new Random(seed);
+    }
+
+    public void askUserSeed() {
+        StdDraw.clear(Color.black);
+        StdDraw.setPenColor(Color.white);
+        drawContent(WIDTH / 2, HEIGHT * 3 / 4, "Please enter a number to randomly generate the world.", 45);
+        drawContent(WIDTH / 2, HEIGHT / 2, "Press S to finish entering the seed.", 30);
+        StdDraw.show();
+    }
+
+    public void drawUserSeed(String strSeed) {
+        StdDraw.clear(Color.black);
+        StdDraw.setPenColor(Color.white);
+        drawContent(WIDTH / 2, HEIGHT * 3 / 4, "Please enter a number to randomly generate the world.", 45);
+        drawContent(WIDTH / 2, HEIGHT / 2, "Press S to finish entering the seed.", 30);
+        drawContent(WIDTH / 2, HEIGHT / 2 - 4, strSeed, 30);
+        StdDraw.show();
+    }
+
+    public void drawContent(int x, int y, String s, int fontSize) {
+        Font font = new Font("Monaco", Font.BOLD, fontSize);
+        StdDraw.setFont(font);
+        StdDraw.text(x, y, s);
+    }
 
     public static void main(String[] args) {
-        long seed = 259876;
+//        File CWD = new File(System.getProperty("user.dir"));
+//        System.out.println(CWD);
+        String input = "N999SDDDWWWDDD";
         Engine game = new Engine();
-        game.buildWorldWithSeed(seed);
+        game.interactWithInputString(input);
     }
-
 }
