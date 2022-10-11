@@ -16,7 +16,6 @@ import java.util.Random;
 
 public class Engine {
     private static final File CWD = new File(System.getProperty("user.dir"));
-//    private static final File GAMEFOLDER = Paths.get(CWD.getPath(), ".gameData").toFile();
     private static final File RANDFILE = Paths.get(CWD.getPath(), "rand.txt").toFile();
     private static final File TERFILE = Paths.get(CWD.getPath(), "ter.txt").toFile();
     private static final File WORLDFILE = Paths.get(CWD.getPath(), "world.txt").toFile();
@@ -267,9 +266,6 @@ public class Engine {
      * Persistent the game state by saving instance variables into files.
      */
     public void saveGame() {
-//        if (!GAMEFOLDER.exists()) {
-//            GAMEFOLDER.mkdir();
-//        }
         FileUtils.writeObject(RANDFILE, rand);
         FileUtils.writeObject(TERFILE, ter);
         FileUtils.writeObject(WORLDFILE, world);
@@ -286,11 +282,11 @@ public class Engine {
         playerLocation = FileUtils.readObject(PLAYERLOCATIONFILE, Point.class);
     }
 
-    public static void main(String[] args) {
-        Engine game = new Engine();
-        String input = "N252798SWD:Q";
-        game.interactWithInputString(input);
+//    public static void main(String[] args) {
+//        Engine game = new Engine();
+//        String input = "N252798SWD:Q";
+//        game.interactWithInputString(input);
 //        game.interactWithKeyboard();
-    }
+//    }
 
 }
