@@ -1,6 +1,9 @@
 package byow.Input;
 
+/**
+ * Interface wrapper for stringCharInput and keyboardCharInput.
+ */
 public interface CharInput {
-    public boolean hasNextChar();
-    public char getNextChar();
+    boolean hasNextChar();
+    char getNextChar();
 }

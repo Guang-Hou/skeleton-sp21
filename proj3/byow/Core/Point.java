@@ -1,7 +1,5 @@
 package byow.Core;
 
-import byow.TileEngine.TETile;
-
 import java.io.Serializable;
 import java.util.Random;
 
@@ -11,34 +9,32 @@ public class Point implements Serializable {
     protected final int x;
     protected final int y;
 
+    /**
+     * Constructor using a Point's location X and Y.
+     * @param x The x location.
+     * @param y The y locatoin.
+     */
     public Point(int x, int y) {
         this.x = x;
         this.y = y;
     }
 
+    /**
+     * Constructor for randomly creating a Point.
+     * @param rand The random number.
+     */
     public Point(Random rand) {
         this.x = rand.nextInt(WORLDWIDTH);
         this.y = rand.nextInt(WORLDHEIGHT);
     }
 
+    /**
+     * Create a new Point by shifting from the current Point's location.
+     * @param dx The location change in x axis.
+     * @param dy The location change in y axis.
+     * @return The new Point.
+     */
     public Point shift(int dx, int dy) {
         return new Point(this.x + dx, this.y + dy);
     }
-
-    public TETile tileAtPoint(TETile[][] world, Point p) {
-        return world[p.x][p.y];
-    }
-
-    /**
-     * Check if the Point is inside the world.
-     *
-     * @return Boolean result if this Point is inside the world.
-     */
-    public boolean isValidPoint() {
-        if (this.x < 0 || this.x >= WORLDWIDTH || this.y < 0 || this.y >= WORLDHEIGHT) {
-            return false;
-        }
-        return true;
-    }
-
 }
