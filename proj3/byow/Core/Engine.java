@@ -73,19 +73,38 @@ public class Engine {
      * it will delegate the handling to loadWorld(), getSeed(), buildWorld() and saveWorld().
      * If the input is not a game option selection,
      * it will delegate the handling to handleMovement() to move the player in the world.
+     *
      * @param input The CharInput type input from user.
      */
     public void handleInput(CharInput input) {
+        if (input.hasNextChar()) {
+            Character firstChar = input.getNextChar();
+            switch (firstChar) {
+                case 'L': {
+                    loadGame();
+                    break;
+                }
+                case 'N': {
+                    getSeed(input);
+                    buildWorld();
+                    break;
+                }
+                default: {
+                    return;
+                }
+            }
+        }
+
         while (input.hasNextChar()) {
-            Character c = input.getNextChar(); // already upper case
-            if (c == 'L') {
-                loadGame();
-            } else if (c == 'N') {
-                getSeed(input);
-                buildWorld();
-            } else if (c == ':'
-                    && (!input.hasNextChar()
-                    || input.getNextChar() == 'Q')) {
+            Character c;
+            if (input instanceof KeyboardCharInput) {
+                c = ((KeyboardCharInput) input).getNextCharAndDisplayHUD(ter, world);
+            } else {
+                c = input.getNextChar();
+            }
+
+            if (c == ':'
+                    && (!input.hasNextChar() || input.getNextChar() == 'Q')) {
                 saveGame();
                 break;
             } else if (c == 'Q') {
@@ -108,8 +127,6 @@ public class Engine {
         if (direction == 0) {
             return;
         }
-//        drawContent(10, HEIGHT - 10, "Key: " + c + "Pressed", 20);
-//        StdDraw.show();
         switch (direction) {
             case 'W': {
                 Point northTile = playerLocation.shift(0, 1);
@@ -196,6 +213,7 @@ public class Engine {
     /**
      * This method extract the random seed from a CharInput interface type input.
      * It is used to handle both stringCharInput class and keyboardCharInput.
+     *
      * @param input The CharInput type input from user.
      */
     public void getSeed(CharInput input) {
@@ -236,6 +254,7 @@ public class Engine {
 
     /**
      * Display the user entered seed digits on the screen.
+     *
      * @param strSeed The user entered digits in a string.
      */
     public void drawUserSeed(String strSeed) {
@@ -251,9 +270,10 @@ public class Engine {
 
     /**
      * Helper function to draw string contents on the screen.
-     * @param x the center x-coordinate of the content
-     * @param y the center y-coordinate of the content
-     * @param s The content string.
+     *
+     * @param x        the center x-coordinate of the content
+     * @param y        the center y-coordinate of the content
+     * @param s        The content string.
      * @param fontSize The font size of the content in the screen.
      */
     public void drawContent(int x, int y, String s, int fontSize) {
@@ -285,7 +305,6 @@ public class Engine {
 //    public static void main(String[] args) {
 //        Engine game = new Engine();
 //        String input = "N252798SWD:Q";
-//        game.interactWithInputString(input);
 //        game.interactWithKeyboard();
 //    }
 
