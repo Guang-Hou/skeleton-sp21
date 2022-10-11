@@ -30,8 +30,8 @@ public class Rectangular implements Serializable {
      * @param rand The random number for the width and height of the rectangular.
      */
     public Rectangular(Point corner, CornerType ct, Random rand) {
-        rectWidth = rand.nextInt(3, MAXRECTWIDTH);
-        rectHeight = rand.nextInt(3, MAXRECTHEIGHT);
+        rectWidth = RandomUtils.uniform(rand, 3, MAXRECTWIDTH);
+        rectHeight = RandomUtils.uniform(rand, 3, MAXRECTHEIGHT);
         switch (ct) {
             case TOPLEFT: {
                 anchor = corner.shift(0, -(rectHeight - 1));
@@ -222,16 +222,16 @@ public class Rectangular implements Serializable {
     public Point getRandTileFromEdge(Random rand, EdgeType et) {
         switch (et) {
             case TOP -> {
-                return new Point(rand.nextInt(topLeft.x + 1, topRight.x), topLeft.y);
+                return new Point(RandomUtils.uniform(rand, topLeft.x + 1, topRight.x), topLeft.y);
             }
             case BOTTOM -> {
-                return new Point(rand.nextInt(bottomLeft.x + 1, bottomRight.x), bottomLeft.y);
+                return new Point(RandomUtils.uniform(rand, bottomLeft.x + 1, bottomRight.x), bottomLeft.y);
             }
             case LEFT -> {
-                return new Point(topLeft.x, rand.nextInt(bottomLeft.y + 1, topLeft.y));
+                return new Point(topLeft.x, RandomUtils.uniform(rand,bottomLeft.y + 1, topLeft.y));
             }
             case RIGHT -> {
-                return new Point(topRight.x, rand.nextInt(bottomRight.y + 1, topRight.y));
+                return new Point(topRight.x, RandomUtils.uniform(rand, bottomRight.y + 1, topRight.y));
             }
             default -> {
                 return null;
