@@ -34,6 +34,7 @@ public class Engine {
      * The constructor initialized the world tile[][] with NOTHING tiles.
      */
     public Engine() {
+        ter = new TERenderer();
         world = new TETile[WIDTH][HEIGHT];
         for (int x = 0; x < WIDTH; x += 1) {
             for (int y = 0; y < HEIGHT; y += 1) {
@@ -48,7 +49,6 @@ public class Engine {
      * Then it calls handleInput() to process user input from keyboard to play the game.
      */
     public void interactWithKeyboard() {
-        ter = new TERenderer();
         ter.initialize(WIDTH, HEIGHT);
         initializeScreen();
         CharInput keyboardChar = new keyboardCharInput();
@@ -93,6 +93,9 @@ public class Engine {
                 break;
             } else {
                 handleMovement(c);
+            }
+            if (input instanceof keyboardCharInput) {
+                ter.renderFrame(world);
             }
         }
     }
@@ -149,7 +152,6 @@ public class Engine {
                 return;
             }
         }
-        ter.renderFrame(world);
     }
 
 
@@ -161,7 +163,6 @@ public class Engine {
     public void buildWorld() {
         Rectangular.fillWorldWithRect(world, rand);
         setupPlayerInitialPoint();
-        ter.renderFrame(world);
     }
 
     /**
@@ -283,6 +284,12 @@ public class Engine {
         ter = FileUtils.readObject(TERFILE, TERenderer.class);
         world = FileUtils.readObject(WORLDFILE, TETile[][].class);
         playerLocation = FileUtils.readObject(PLAYERLOCATIONFILE, Point.class);
-        ter.renderFrame(world);
     }
+
+//    public static void main(String[] args) {
+//        Engine game = new Engine();
+//        String input = "N252798SWD:Q";
+//        game.interactWithInputString(input);
+//    }
+
 }
