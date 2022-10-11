@@ -1,8 +1,8 @@
 package byow.Core;
 
 import byow.Input.CharInput;
-import byow.Input.keyboardCharInput;
-import byow.Input.stringCharInput;
+import byow.Input.KeyboardCharInput;
+import byow.Input.StringCharInput;
 import byow.TileEngine.TERenderer;
 import byow.TileEngine.TETile;
 import byow.TileEngine.Tileset;
@@ -16,12 +16,12 @@ import java.util.Random;
 
 public class Engine {
     private static final File CWD = new File(System.getProperty("user.dir"));
-    private static final File GAMEFOLDER = Paths.get(CWD.getPath(), ".gameData").toFile();
-    private static final File RANDFILE = Paths.get(GAMEFOLDER.getPath(), "rand.txt").toFile();
-    private static final File TERFILE = Paths.get(GAMEFOLDER.getPath(), "ter.txt").toFile();
-    private static final File WORLDFILE = Paths.get(GAMEFOLDER.getPath(), "world.txt").toFile();
+//    private static final File GAMEFOLDER = Paths.get(CWD.getPath(), ".gameData").toFile();
+    private static final File RANDFILE = Paths.get(CWD.getPath(), "rand.txt").toFile();
+    private static final File TERFILE = Paths.get(CWD.getPath(), "ter.txt").toFile();
+    private static final File WORLDFILE = Paths.get(CWD.getPath(), "world.txt").toFile();
     private static final File PLAYERLOCATIONFILE = Paths.get(
-            GAMEFOLDER.getPath(), "playerLocation.txt").toFile();
+            CWD.getPath(), "playerLocation.txt").toFile();
     protected static final int WIDTH = 80;
     protected static final int HEIGHT = 30;
     private TERenderer ter;
@@ -51,7 +51,7 @@ public class Engine {
     public void interactWithKeyboard() {
         ter.initialize(WIDTH, HEIGHT);
         initializeScreen();
-        CharInput keyboardChar = new keyboardCharInput();
+        CharInput keyboardChar = new KeyboardCharInput();
         handleInput(keyboardChar);
         System.exit(0);      // what is the other alternatives, will this cause autograder problem?
     }
@@ -63,7 +63,7 @@ public class Engine {
      * @return the 2D TETile[][] representing the state of the world
      */
     public TETile[][] interactWithInputString(String input) {
-        CharInput charInput = new stringCharInput(input);
+        CharInput charInput = new StringCharInput(input);
         handleInput(charInput);
         return world;
     }
@@ -94,7 +94,7 @@ public class Engine {
             } else {
                 handleMovement(c);
             }
-            if (input instanceof keyboardCharInput) {
+            if (input instanceof KeyboardCharInput) {
                 ter.renderFrame(world);
             }
         }
@@ -200,7 +200,7 @@ public class Engine {
      * @param input The CharInput type input from user.
      */
     public void getSeed(CharInput input) {
-        if (input instanceof keyboardCharInput) {
+        if (input instanceof KeyboardCharInput) {
             askUserSeed();
         }
         String strSeed = "";
@@ -211,7 +211,7 @@ public class Engine {
                 break;
             } else if (Character.isDigit(digit)) {
                 strSeed += digit;
-                if (input instanceof keyboardCharInput) {
+                if (input instanceof KeyboardCharInput) {
                     drawUserSeed(strSeed);
                 }
             } else {
@@ -286,10 +286,11 @@ public class Engine {
         playerLocation = FileUtils.readObject(PLAYERLOCATIONFILE, Point.class);
     }
 
-//    public static void main(String[] args) {
-//        Engine game = new Engine();
-//        String input = "N252798SWD:Q";
-//        game.interactWithInputString(input);
-//    }
+    public static void main(String[] args) {
+        Engine game = new Engine();
+        String input = "N252798SWD:Q";
+        game.interactWithInputString(input);
+//        game.interactWithKeyboard();
+    }
 
 }

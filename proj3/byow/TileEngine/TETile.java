@@ -3,6 +3,7 @@ package byow.TileEngine;
 import java.awt.Color;
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Random;
 
 import edu.princeton.cs.introcs.StdDraw;
@@ -193,10 +194,18 @@ public class TETile implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (o == null) {return false;}
-        if (this.getClass() != o.getClass()) {return false;}
+        if (o == null) {
+            return false;
+        }
+        if (this.getClass() != o.getClass()) {
+            return false;
+        }
         TETile other = (TETile) o;
         return this.description.equals(other.description);
     }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(character, textColor, backgroundColor, description, filepath);
+    }
 }

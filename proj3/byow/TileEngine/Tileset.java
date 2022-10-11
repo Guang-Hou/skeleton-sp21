@@ -17,7 +17,8 @@ import java.awt.Color;
  */
 
 public class Tileset {
-    public static final TETile MARIO = new TETile('M', Color.white, Color.black, "Mario", "./resources/mario1.png");
+    public static final TETile MARIO = new TETile('M', Color.white, Color.black, "Mario",
+            "./resources/mario1.png");
     public static final TETile AVATAR = new TETile('@', Color.white, Color.black, "you");
     public static final TETile WALL = new TETile('#', new Color(216, 128, 128), Color.darkGray,
             "wall");

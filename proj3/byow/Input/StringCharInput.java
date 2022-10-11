@@ -3,11 +3,11 @@ package byow.Input;
 /**
  * A class implementing CharInput interface. It handles a predetermined string input to the game.
  */
-public class stringCharInput implements CharInput{
+public class StringCharInput implements CharInput {
     private String inputString;
     private int curIndex = 0;
 
-    public stringCharInput(String inputString) {
+    public StringCharInput(String inputString) {
         this.inputString = inputString;
     }
 
