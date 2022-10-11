@@ -267,9 +267,9 @@ public class Engine {
      * Persistent the game state by saving instance variables into files.
      */
     public void saveGame() {
-        if (!GAMEFOLDER.exists()) {
-            GAMEFOLDER.mkdir();
-        }
+//        if (!GAMEFOLDER.exists()) {
+//            GAMEFOLDER.mkdir();
+//        }
         FileUtils.writeObject(RANDFILE, rand);
         FileUtils.writeObject(TERFILE, ter);
         FileUtils.writeObject(WORLDFILE, world);
